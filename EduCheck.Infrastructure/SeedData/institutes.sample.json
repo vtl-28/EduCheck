@@ -1,0 +1,20 @@
+[
+    {
+        "Institution Name": "Sample University",
+        "Accreditation Number": "SAMPLE-001",
+        "Accreditation Period": "01 January 2024",
+        "Provider Type": "Accredited",
+        "Postal Address": "P O Box 123 Sample City 0000",
+        "Physical Address": "123 Sample Street Sample City 0000",
+        "Telephone": "000 000 0000"
+    },
+    {
+        "Institution Name": "Example College",
+        "Accreditation Number": "SAMPLE-002",
+        "Accreditation Period": "01 January 2024",
+        "Provider Type": "Accredited",
+        "Postal Address": "P O Box 456 Example Town 0000",
+        "Physical Address": "456 Example Road Example Town 0000",
+        "Telephone": "000 000 0000"
+    }
+]
