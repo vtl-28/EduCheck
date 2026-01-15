@@ -93,7 +93,7 @@ public class AuthControllerTests
     [Fact]
     public async Task RegisterStudent_DuplicateEmail_ReturnsBadRequest()
     {
-      
+
         var request = new StudentRegistrationRequest
         {
             FirstName = "John",
@@ -113,10 +113,10 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.RegisterStudentAsync(request))
             .ReturnsAsync(response);
 
-      
+
         var result = await _controller.RegisterStudent(request);
 
-        
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var authResponse = badRequestResult.Value.Should().BeOfType<AuthResponse>().Subject;
         authResponse.Success.Should().BeFalse();
@@ -129,7 +129,7 @@ public class AuthControllerTests
     [Fact]
     public async Task RegisterAdmin_ValidRequest_ReturnsOk()
     {
-       
+
         var request = new AdminRegistrationRequest
         {
             FirstName = "Admin",
@@ -151,10 +151,10 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.RegisterAdminAsync(request))
             .ReturnsAsync(response);
 
-     
+
         var result = await _controller.RegisterAdmin(request);
 
-       
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var authResponse = okResult.Value.Should().BeOfType<AuthResponse>().Subject;
         authResponse.Success.Should().BeTrue();
@@ -168,7 +168,7 @@ public class AuthControllerTests
     [Fact]
     public async Task Login_ValidCredentials_ReturnsOk()
     {
-        
+
         var request = new LoginRequest
         {
             Email = "john@example.com",
@@ -188,7 +188,7 @@ public class AuthControllerTests
 
         var result = await _controller.Login(request);
 
-    
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var authResponse = okResult.Value.Should().BeOfType<AuthResponse>().Subject;
         authResponse.Success.Should().BeTrue();
@@ -198,7 +198,7 @@ public class AuthControllerTests
     [Fact]
     public async Task Login_InvalidCredentials_ReturnsUnauthorized()
     {
- 
+
         var request = new LoginRequest
         {
             Email = "john@example.com",
@@ -215,7 +215,7 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.LoginAsync(request))
             .ReturnsAsync(response);
 
-   
+
         var result = await _controller.Login(request);
 
         var unauthorizedResult = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
@@ -248,10 +248,10 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.RefreshTokenAsync(request))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.RefreshToken(request);
 
-        
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var authResponse = okResult.Value.Should().BeOfType<AuthResponse>().Subject;
         authResponse.Success.Should().BeTrue();
@@ -261,7 +261,7 @@ public class AuthControllerTests
     [Fact]
     public async Task RefreshToken_InvalidToken_ReturnsUnauthorized()
     {
-       
+
         var request = new RefreshTokenRequest
         {
             AccessToken = "invalid-token",
@@ -278,10 +278,10 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.RefreshTokenAsync(request))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.RefreshToken(request);
 
-        
+
         result.Should().BeOfType<UnauthorizedObjectResult>();
     }
 
@@ -292,7 +292,7 @@ public class AuthControllerTests
     [Fact]
     public async Task Logout_ValidToken_ReturnsOk()
     {
-       
+
         var request = new LogoutRequest
         {
             RefreshToken = "valid-refresh-token"
@@ -301,7 +301,7 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.RevokeRefreshTokenAsync(request.RefreshToken))
             .ReturnsAsync(true);
 
-       
+
         var result = await _controller.Logout(request);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
@@ -310,7 +310,7 @@ public class AuthControllerTests
     [Fact]
     public async Task Logout_InvalidToken_ReturnsBadRequest()
     {
-        
+
         var request = new LogoutRequest
         {
             RefreshToken = "invalid-token"
@@ -321,7 +321,7 @@ public class AuthControllerTests
 
         var result = await _controller.Logout(request);
 
-        
+
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
@@ -332,7 +332,7 @@ public class AuthControllerTests
     [Fact]
     public async Task LogoutAll_AuthenticatedUser_ReturnsOk()
     {
-        
+
         var userId = Guid.NewGuid();
         var claims = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
@@ -344,20 +344,20 @@ public class AuthControllerTests
         _authServiceMock.Setup(x => x.RevokeAllUserTokensAsync(userId))
             .ReturnsAsync(true);
 
-       
+
         var result = await _controller.LogoutAll();
 
-        
+
         result.Should().BeOfType<OkObjectResult>();
     }
 
     [Fact]
     public async Task LogoutAll_NoUserClaim_ReturnsUnauthorized()
     {
-        
+
         var result = await _controller.LogoutAll();
 
-      
+
         result.Should().BeOfType<UnauthorizedObjectResult>();
     }
 
@@ -368,7 +368,7 @@ public class AuthControllerTests
     [Fact]
     public async Task GetCurrentUser_AuthenticatedUser_ReturnsUser()
     {
-       
+
         var userId = Guid.NewGuid();
         var claims = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
@@ -381,17 +381,17 @@ public class AuthControllerTests
 
         _controller.ControllerContext.HttpContext.User = claims;
 
-        
+
         var result = await _controller.GetCurrentUser();
 
-      
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
     }
 
     [Fact]
     public async Task GetCurrentUser_NotAuthenticated_ReturnsUnauthorized()
     {
-        
+
         var result = await _controller.GetCurrentUser();
 
         result.Should().BeOfType<UnauthorizedObjectResult>();
@@ -404,12 +404,12 @@ public class AuthControllerTests
     [Fact]
     public void GoogleLogin_ReturnsAuthorizationUrl()
     {
-        
+
         var expectedUrl = "https://accounts.google.com/oauth?client_id=test";
         _googleAuthServiceMock.Setup(x => x.GetAuthorizationUrl(It.IsAny<string>()))
             .Returns(expectedUrl);
 
-      
+
         var result = _controller.GoogleLogin();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;

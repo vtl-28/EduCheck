@@ -23,10 +23,10 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ValidUser_ReturnsValidJwtToken()
     {
-      
+
         var user = TestHelpers.CreateTestUser();
 
-       
+
         var token = _tokenService.GenerateAccessToken(user);
 
         token.Should().NotBeNullOrEmpty();
@@ -39,17 +39,17 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ValidUser_TokenContainsCorrectClaims()
     {
-        
+
         var user = TestHelpers.CreateTestUser(
             email: "john@example.com",
             firstName: "John",
             lastName: "Doe",
             role: UserRole.Student);
 
-       
+
         var token = _tokenService.GenerateAccessToken(user);
 
-        
+
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -62,13 +62,13 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ValidUser_TokenContainsUserId()
     {
-        
+
         var user = TestHelpers.CreateTestUser();
 
-        
+
         var token = _tokenService.GenerateAccessToken(user);
 
-        
+
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -80,13 +80,13 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ValidUser_TokenHasCorrectIssuerAndAudience()
     {
-        
+
         var user = TestHelpers.CreateTestUser();
 
-        
+
         var token = _tokenService.GenerateAccessToken(user);
 
-        
+
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -97,13 +97,13 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ValidUser_TokenHasExpirationTime()
     {
-       
+
         var user = TestHelpers.CreateTestUser();
 
-        
+
         var token = _tokenService.GenerateAccessToken(user);
 
-        
+
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -118,7 +118,7 @@ public class TokenServiceTests
     [Fact]
     public void GenerateRefreshToken_ReturnsNonEmptyString()
     {
-       
+
         var token = _tokenService.GenerateRefreshToken();
 
         token.Should().NotBeNullOrEmpty();
@@ -127,7 +127,7 @@ public class TokenServiceTests
     [Fact]
     public void GenerateRefreshToken_ReturnsBase64String()
     {
-      
+
         var token = _tokenService.GenerateRefreshToken();
 
         var isBase64 = IsBase64String(token);
@@ -137,12 +137,12 @@ public class TokenServiceTests
     [Fact]
     public void GenerateRefreshToken_EachCallReturnsUniqueToken()
     {
-        
+
         var token1 = _tokenService.GenerateRefreshToken();
         var token2 = _tokenService.GenerateRefreshToken();
         var token3 = _tokenService.GenerateRefreshToken();
 
-        
+
         token1.Should().NotBe(token2);
         token2.Should().NotBe(token3);
         token1.Should().NotBe(token3);
@@ -155,14 +155,14 @@ public class TokenServiceTests
     [Fact]
     public void GetPrincipalFromExpiredToken_ValidToken_ReturnsPrincipal()
     {
-        
+
         var user = TestHelpers.CreateTestUser();
         var token = _tokenService.GenerateAccessToken(user);
 
-       
+
         var principal = _tokenService.GetPrincipalFromExpiredToken(token);
 
-        
+
         principal.Should().NotBeNull();
         principal!.FindFirst(ClaimTypes.Email)?.Value.Should().Be(user.Email);
     }
@@ -170,37 +170,37 @@ public class TokenServiceTests
     [Fact]
     public void GetPrincipalFromExpiredToken_InvalidToken_ReturnsNull()
     {
-        
+
         var invalidToken = "this.is.not.a.valid.token";
 
-        
+
         var principal = _tokenService.GetPrincipalFromExpiredToken(invalidToken);
 
-        
+
         principal.Should().BeNull();
     }
 
     [Fact]
     public void GetPrincipalFromExpiredToken_EmptyToken_ReturnsNull()
     {
-        
+
         var principal = _tokenService.GetPrincipalFromExpiredToken(string.Empty);
 
-        
+
         principal.Should().BeNull();
     }
 
     [Fact]
     public void GetPrincipalFromExpiredToken_ValidToken_ContainsUserIdClaim()
     {
-       
+
         var user = TestHelpers.CreateTestUser();
         var token = _tokenService.GenerateAccessToken(user);
 
-       
+
         var principal = _tokenService.GetPrincipalFromExpiredToken(token);
 
-       
+
         principal.Should().NotBeNull();
         var userIdClaim = principal!.FindFirst(ClaimTypes.NameIdentifier);
         userIdClaim.Should().NotBeNull();

@@ -42,7 +42,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterStudentAsync_ValidRequest_ReturnsSuccess()
     {
-       
+
         var request = new StudentRegistrationRequest
         {
             FirstName = "John",
@@ -69,10 +69,10 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
-       
+
         var result = await _authService.RegisterStudentAsync(request);
 
-      
+
         result.Success.Should().BeTrue();
         result.Message.Should().Be("Registration successful");
         result.AccessToken.Should().NotBeNullOrEmpty();
@@ -86,7 +86,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterStudentAsync_DuplicateEmail_ReturnsError()
     {
-       
+
         var existingUser = TestHelpers.CreateTestUser(email: "existing@example.com");
 
         var request = new StudentRegistrationRequest
@@ -101,10 +101,10 @@ public class AuthServiceTests
         _userManagerMock.Setup(x => x.FindByEmailAsync(request.Email))
             .ReturnsAsync(existingUser);
 
-        
+
         var result = await _authService.RegisterStudentAsync(request);
 
-        
+
         result.Success.Should().BeFalse();
         result.Errors.Should().Contain("An account with this email already exists");
         result.AccessToken.Should().BeNull();
@@ -113,7 +113,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterStudentAsync_WeakPassword_ReturnsError()
     {
-        
+
         var request = new StudentRegistrationRequest
         {
             FirstName = "John",
@@ -132,10 +132,10 @@ public class AuthServiceTests
                 new IdentityError { Description = "Password must contain an uppercase letter." }
             ));
 
-     
+
         var result = await _authService.RegisterStudentAsync(request);
 
-     
+
         result.Success.Should().BeFalse();
         result.Errors.Should().Contain("Password must be at least 8 characters.");
         result.Errors.Should().Contain("Password must contain an uppercase letter.");
@@ -144,7 +144,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterStudentAsync_ValidRequest_CreatesStudentProfile()
     {
-        
+
         var request = new StudentRegistrationRequest
         {
             FirstName = "John",
@@ -171,15 +171,15 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
-        
+
         var result = await _authService.RegisterStudentAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.User!.Province.Should().Be("Gauteng");
         result.User.City.Should().Be("Johannesburg");
 
-        
+
         var students = _context.Students.ToList();
         students.Should().HaveCount(1);
         students.First().Province.Should().Be("Gauteng");
@@ -192,7 +192,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterAdminAsync_ValidRequest_ReturnsSuccess()
     {
-       
+
         var request = new AdminRegistrationRequest
         {
             FirstName = "Admin",
@@ -219,7 +219,7 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
-       
+
         var result = await _authService.RegisterAdminAsync(request);
 
         result.Success.Should().BeTrue();
@@ -232,7 +232,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RegisterAdminAsync_ValidRequest_CreatesAdminProfile()
     {
-        
+
         var request = new AdminRegistrationRequest
         {
             FirstName = "Admin",
@@ -259,12 +259,12 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
-       
+
         var result = await _authService.RegisterAdminAsync(request);
 
         result.Success.Should().BeTrue();
 
-       
+
         var admins = _context.Admins.ToList();
         admins.Should().HaveCount(1);
         admins.First().Department.Should().Be("DHET");
@@ -278,7 +278,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_ValidCredentials_ReturnsTokens()
     {
-        
+
         var user = TestHelpers.CreateTestUser(email: "john@example.com");
         var student = TestHelpers.CreateTestStudent(user.Id);
 
@@ -312,7 +312,7 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GenerateRefreshToken())
             .Returns("test-refresh-token");
 
-        
+
         var result = await _authService.LoginAsync(request);
 
         result.Success.Should().BeTrue();
@@ -325,7 +325,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_InvalidEmail_ReturnsError()
     {
-        
+
         var request = new LoginRequest
         {
             Email = "nonexistent@example.com",
@@ -335,10 +335,10 @@ public class AuthServiceTests
         _userManagerMock.Setup(x => x.FindByEmailAsync(request.Email))
             .ReturnsAsync((ApplicationUser?)null);
 
-       
+
         var result = await _authService.LoginAsync(request);
 
-       
+
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Invalid credentials");
         result.Errors.Should().Contain("Invalid email or password");
@@ -347,7 +347,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_InvalidPassword_ReturnsError()
     {
-       
+
         var user = TestHelpers.CreateTestUser();
 
         var request = new LoginRequest
@@ -365,10 +365,10 @@ public class AuthServiceTests
         _userManagerMock.Setup(x => x.AccessFailedAsync(user))
             .ReturnsAsync(IdentityResult.Success);
 
-        
+
         var result = await _authService.LoginAsync(request);
 
-     
+
         result.Success.Should().BeFalse();
         result.Errors.Should().Contain("Invalid email or password");
     }
@@ -376,7 +376,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_DeactivatedAccount_ReturnsError()
     {
-       
+
         var user = TestHelpers.CreateTestUser();
         user.IsActive = false;
 
@@ -389,10 +389,10 @@ public class AuthServiceTests
         _userManagerMock.Setup(x => x.FindByEmailAsync(request.Email))
             .ReturnsAsync(user);
 
-        
+
         var result = await _authService.LoginAsync(request);
 
-       
+
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Account deactivated");
     }
@@ -400,7 +400,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_LockedOutAccount_ReturnsError()
     {
-       
+
         var user = TestHelpers.CreateTestUser();
 
         var request = new LoginRequest
@@ -418,10 +418,10 @@ public class AuthServiceTests
         _userManagerMock.Setup(x => x.IsLockedOutAsync(user))
             .ReturnsAsync(true);
 
-        
+
         var result = await _authService.LoginAsync(request);
 
-        
+
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Account locked");
     }
@@ -433,7 +433,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RefreshTokenAsync_ValidTokens_ReturnsNewTokens()
     {
-        
+
         var user = TestHelpers.CreateTestUser();
         var refreshToken = "valid-refresh-token";
         var refreshTokenHash = HashToken(refreshToken);
@@ -466,10 +466,10 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GenerateRefreshToken())
             .Returns("new-refresh-token");
 
-      
+
         var result = await _authService.RefreshTokenAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.AccessToken.Should().Be("new-access-token");
         result.RefreshToken.Should().NotBeNullOrEmpty();
@@ -478,7 +478,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RefreshTokenAsync_InvalidAccessToken_ReturnsError()
     {
-       
+
         var request = new RefreshTokenRequest
         {
             AccessToken = "invalid-token",
@@ -488,10 +488,10 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GetPrincipalFromExpiredToken(request.AccessToken))
             .Returns((System.Security.Claims.ClaimsPrincipal?)null);
 
-        
+
         var result = await _authService.RefreshTokenAsync(request);
 
-       
+
         result.Success.Should().BeFalse();
         result.Errors.Should().Contain("Invalid access token");
     }
@@ -522,10 +522,10 @@ public class AuthServiceTests
         _tokenServiceMock.Setup(x => x.GetPrincipalFromExpiredToken(request.AccessToken))
             .Returns(claims);
 
-       
+
         var result = await _authService.RefreshTokenAsync(request);
 
-       
+
         result.Success.Should().BeFalse();
         result.Errors.Should().Contain("Refresh token has been revoked");
     }
@@ -537,7 +537,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RevokeRefreshTokenAsync_ValidToken_ReturnsTrue()
     {
-       
+
         var user = TestHelpers.CreateTestUser();
         var refreshToken = "token-to-revoke";
         var refreshTokenHash = HashToken(refreshToken);
@@ -546,13 +546,13 @@ public class AuthServiceTests
         await _context.RefreshTokens.AddAsync(storedToken);
         await _context.SaveChangesAsync();
 
-        
+
         var result = await _authService.RevokeRefreshTokenAsync(refreshToken);
 
-       
+
         result.Should().BeTrue();
 
-       
+
         var updatedToken = _context.RefreshTokens.First();
         updatedToken.IsRevoked.Should().BeTrue();
     }
@@ -560,10 +560,10 @@ public class AuthServiceTests
     [Fact]
     public async Task RevokeRefreshTokenAsync_InvalidToken_ReturnsFalse()
     {
-       
+
         var result = await _authService.RevokeRefreshTokenAsync("non-existent-token");
 
-        
+
         result.Should().BeFalse();
     }
 
@@ -574,7 +574,7 @@ public class AuthServiceTests
     [Fact]
     public async Task RevokeAllUserTokensAsync_UserWithTokens_RevokesAll()
     {
-        
+
         var user = TestHelpers.CreateTestUser();
 
         var token1 = TestHelpers.CreateTestRefreshToken(user.Id, "hash1");
@@ -586,7 +586,7 @@ public class AuthServiceTests
 
         var result = await _authService.RevokeAllUserTokensAsync(user.Id);
 
-        
+
         result.Should().BeTrue();
 
         var tokens = _context.RefreshTokens.Where(t => t.UserId == user.Id).ToList();
@@ -596,10 +596,10 @@ public class AuthServiceTests
     [Fact]
     public async Task RevokeAllUserTokensAsync_UserWithNoTokens_ReturnsFalse()
     {
-       
+
         var userId = Guid.NewGuid();
 
-       
+
         var result = await _authService.RevokeAllUserTokensAsync(userId);
 
         result.Should().BeFalse();

@@ -125,7 +125,7 @@ public class GoogleAuthService : IGoogleAuthService
                     };
                 }
 
-               
+
                 student = new Student
                 {
                     Id = Guid.NewGuid(),
@@ -137,14 +137,14 @@ public class GoogleAuthService : IGoogleAuthService
                 await _context.Students.AddAsync(student);
                 await _context.SaveChangesAsync();
 
-          
+
                 await _userManager.AddToRoleAsync(user, UserRole.Student.ToString());
 
                 _logger.LogInformation("Created new user from Google OAuth: {Email}", user.Email);
             }
             else
             {
-             
+
                 if (!user.IsActive)
                 {
                     return new AuthResponse
@@ -169,7 +169,7 @@ public class GoogleAuthService : IGoogleAuthService
             user.LastLoginAt = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
 
-            
+
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = await CreateRefreshTokenAsync(user.Id);
 

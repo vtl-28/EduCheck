@@ -14,7 +14,7 @@ public static class IdentityServiceExtensions
     {
         services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
         {
-            
+
             options.Password.RequireDigit = true;
             options.Password.RequireLowercase = true;
             options.Password.RequireUppercase = true;
@@ -22,12 +22,12 @@ public static class IdentityServiceExtensions
             options.Password.RequiredLength = 8;
             options.Password.RequiredUniqueChars = 4;
 
-         
+
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.AllowedForNewUsers = true;
 
-       
+
             options.User.AllowedUserNameCharacters =
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
             options.User.RequireUniqueEmail = true;

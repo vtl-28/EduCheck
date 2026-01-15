@@ -40,7 +40,7 @@ public class AuthService : IAuthService
     {
         _logger.LogInformation("Attempting to register student with email: {Email}", request.Email);
 
-        
+
         var existingUser = await _userManager.FindByEmailAsync(request.Email);
         if (existingUser != null)
         {
@@ -373,7 +373,7 @@ public class AuthService : IAuthService
             admin = await _context.Admins.FirstOrDefaultAsync(a => a.UserId == user.Id);
         }
 
-      
+
         var newAccessToken = _tokenService.GenerateAccessToken(user);
         var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
 

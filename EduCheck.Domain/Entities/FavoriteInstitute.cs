@@ -18,7 +18,7 @@ public class FavoriteInstitute
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-   
+
     [ForeignKey(nameof(StudentId))]
     public virtual Student Student { get; set; } = null!;
 

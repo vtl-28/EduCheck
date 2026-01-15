@@ -30,7 +30,7 @@ public class ApplicationUser : IdentityUser<Guid>
     public virtual Admin? Admin { get; set; }
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
- 
+
     [NotMapped]
     public string FullName => $"{FirstName} {LastName}";
 }
