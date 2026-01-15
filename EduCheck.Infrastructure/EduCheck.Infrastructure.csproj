@@ -10,11 +10,17 @@
     <None Remove="SeedData\institutes.json" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="SeedData\institutes.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<!-- Sample seed data - always include -->
+		<Content Include="SeedData\institutes.sample.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+
+		<!-- Real seed data - only copy if exists (excluded from git) -->
+		<Content Include="SeedData\institutes.json" Condition="Exists('SeedData\institutes.json')">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
