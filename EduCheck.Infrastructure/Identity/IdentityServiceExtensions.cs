@@ -5,6 +5,7 @@ using EduCheck.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using EduCheck.Infrastructure.Services;
 
 namespace EduCheck.Infrastructure.Identity;
 
@@ -45,6 +46,7 @@ public static class IdentityServiceExtensions
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IInstituteService, InstituteService>();
 
         return services;
     }
