@@ -122,7 +122,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_ByName_ReturnsMatchingInstitutes()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -134,10 +134,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Institutes.Should().HaveCount(3);
@@ -148,7 +148,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_ByName_IsCaseInsensitive()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -160,10 +160,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-      
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(3);
     }
@@ -171,7 +171,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_ByAccreditationNumber_ReturnsExactMatch()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -183,10 +183,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(1);
         result.Data.Institutes.First().InstitutionName.Should().Be("University of Cape Town");
@@ -196,7 +196,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_ByAccreditationNumber_IsCaseInsensitive()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -208,10 +208,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(1);
         result.Data.Institutes.First().InstitutionName.Should().Be("University of Cape Town");
@@ -220,7 +220,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_WithProvinceFilter_ReturnsFilteredResults()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -233,10 +233,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-       
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(2);
         result.Data.Institutes.Should().AllSatisfy(i =>
@@ -246,7 +246,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_WithProvinceFilter_IsCaseInsensitive()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -259,10 +259,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(2);
     }
@@ -270,7 +270,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_NoResults_ReturnsSuggestions()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -282,10 +282,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Message.Should().Be("No institutes found matching your search");
         result.Data!.Institutes.Should().BeEmpty();
@@ -297,7 +297,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_ExcludesInactiveInstitutes()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -309,10 +309,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().BeEmpty();
     }
@@ -320,7 +320,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_WithPagination_ReturnsCorrectPage()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -332,10 +332,10 @@ public class InstituteServiceTests
             PageSize = 2
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-       
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(2);
         result.Data.Pagination.CurrentPage.Should().Be(1);
@@ -349,7 +349,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_SecondPage_ReturnsRemainingResults()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -361,10 +361,10 @@ public class InstituteServiceTests
             PageSize = 2
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(1);
         result.Data.Pagination.CurrentPage.Should().Be(2);
@@ -375,7 +375,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_ReturnsCorrectAccreditationStatus()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -387,10 +387,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-       
+
         var result = await service.SearchInstitutesAsync(request);
 
-        
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(1);
         result.Data.Institutes.First().IsAccredited.Should().BeFalse();
@@ -400,7 +400,7 @@ public class InstituteServiceTests
     [Fact]
     public async Task SearchInstitutesAsync_AccreditedInstitute_HasCorrectStatus()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
@@ -412,10 +412,10 @@ public class InstituteServiceTests
             PageSize = 10
         };
 
-        
+
         var result = await service.SearchInstitutesAsync(request);
 
-       
+
         result.Success.Should().BeTrue();
         result.Data!.Institutes.Should().HaveCount(1);
         result.Data.Institutes.First().IsAccredited.Should().BeTrue();
@@ -429,15 +429,15 @@ public class InstituteServiceTests
     [Fact]
     public async Task GetInstituteByIdAsync_ValidId_ReturnsInstitute()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
 
-        
+
         var result = await service.GetInstituteByIdAsync(1);
 
-        
+
         result.Success.Should().BeTrue();
         result.Message.Should().Be("Institute found");
         result.Data.Should().NotBeNull();
@@ -449,15 +449,15 @@ public class InstituteServiceTests
     [Fact]
     public async Task GetInstituteByIdAsync_InvalidId_ReturnsNotFound()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
 
-       
+
         var result = await service.GetInstituteByIdAsync(999);
 
-        
+
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Institute not found");
         result.Data.Should().BeNull();
@@ -467,15 +467,15 @@ public class InstituteServiceTests
     [Fact]
     public async Task GetInstituteByIdAsync_InactiveInstitute_ReturnsNotFound()
     {
-       
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
 
-        
+
         var result = await service.GetInstituteByIdAsync(5);
 
-        
+
         result.Success.Should().BeFalse();
         result.Message.Should().Be("Institute not found");
         result.Data.Should().BeNull();
@@ -484,15 +484,15 @@ public class InstituteServiceTests
     [Fact]
     public async Task GetInstituteByIdAsync_ReturnsAllFields()
     {
-        
+
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
         var service = new InstituteService(context, _loggerMock.Object);
 
-        
+
         var result = await service.GetInstituteByIdAsync(1);
 
-       
+
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Id.Should().Be(1);

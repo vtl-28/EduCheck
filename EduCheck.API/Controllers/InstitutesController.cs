@@ -37,7 +37,7 @@ public class InstitutesController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
-        
+
         if (string.IsNullOrWhiteSpace(query))
         {
             return BadRequest(new InstituteSearchResponse
@@ -68,7 +68,7 @@ public class InstitutesController : ControllerBase
             });
         }
 
-        
+
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 50) pageSize = 50;

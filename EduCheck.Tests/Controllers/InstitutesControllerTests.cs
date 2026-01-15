@@ -27,7 +27,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_ValidQuery_ReturnsOk()
     {
-        
+
         var response = new InstituteSearchResponse
         {
             Success = true,
@@ -53,10 +53,10 @@ public class InstitutesControllerTests
             .Setup(x => x.SearchInstitutesAsync(It.IsAny<InstituteSearchRequest>()))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.Search("Test");
 
-        
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var returnedResponse = okResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
         returnedResponse.Success.Should().BeTrue();
@@ -66,10 +66,10 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_EmptyQuery_ReturnsBadRequest()
     {
-        
+
         var result = await _controller.Search("");
 
-        
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
         response.Success.Should().BeFalse();
@@ -79,10 +79,10 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_NullQuery_ReturnsBadRequest()
     {
-        
+
         var result = await _controller.Search(null!);
 
-        
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
         response.Success.Should().BeFalse();
@@ -91,7 +91,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_QueryTooShort_ReturnsBadRequest()
     {
-       
+
         var result = await _controller.Search("A");
 
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
@@ -103,13 +103,13 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_QueryTooLong_ReturnsBadRequest()
     {
-        
+
         var longQuery = new string('A', 256);
 
-        
+
         var result = await _controller.Search(longQuery);
 
-        
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
         response.Success.Should().BeFalse();
@@ -119,7 +119,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_WithProvinceFilter_PassesFilterToService()
     {
-      
+
         var response = new InstituteSearchResponse
         {
             Success = true,
@@ -135,14 +135,14 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r => 
+            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r =>
                 r.Province == "Gauteng")))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.Search("Test", "Gauteng");
 
-        
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
             It.Is<InstituteSearchRequest>(r => r.Province == "Gauteng")), Times.Once);
@@ -151,7 +151,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_WithPagination_PassesPaginationToService()
     {
-        
+
         var response = new InstituteSearchResponse
         {
             Success = true,
@@ -168,14 +168,14 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r => 
+            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r =>
                 r.Page == 2 && r.PageSize == 20)))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.Search("Test", null, 2, 20);
 
-        
+
         result.Should().BeOfType<OkObjectResult>();
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
             It.Is<InstituteSearchRequest>(r => r.Page == 2 && r.PageSize == 20)), Times.Once);
@@ -184,7 +184,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_PageSizeExceedsMax_ClampedTo50()
     {
-        
+
         var response = new InstituteSearchResponse
         {
             Success = true,
@@ -200,7 +200,7 @@ public class InstitutesControllerTests
             .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r => r.PageSize == 50)))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.Search("Test", null, 1, 100);
 
 
@@ -212,7 +212,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_NegativePage_DefaultsTo1()
     {
-        
+
         var response = new InstituteSearchResponse
         {
             Success = true,
@@ -228,10 +228,10 @@ public class InstitutesControllerTests
             .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r => r.Page == 1)))
             .ReturnsAsync(response);
 
-       
+
         var result = await _controller.Search("Test", null, -5, 10);
 
-        
+
         result.Should().BeOfType<OkObjectResult>();
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
             It.Is<InstituteSearchRequest>(r => r.Page == 1)), Times.Once);
@@ -240,7 +240,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_NoResults_ReturnsOkWithEmptyList()
     {
-      
+
         var response = new InstituteSearchResponse
         {
             Success = true,
@@ -261,10 +261,10 @@ public class InstitutesControllerTests
             .Setup(x => x.SearchInstitutesAsync(It.IsAny<InstituteSearchRequest>()))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.Search("NonExistent");
 
-        
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var returnedResponse = okResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
         returnedResponse.Success.Should().BeTrue();
@@ -280,7 +280,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task GetById_ValidId_ReturnsOk()
     {
-        
+
         var response = new InstituteDetailResponse
         {
             Success = true,
@@ -298,10 +298,10 @@ public class InstitutesControllerTests
             .Setup(x => x.GetInstituteByIdAsync(1))
             .ReturnsAsync(response);
 
-       
+
         var result = await _controller.GetById(1);
 
-        
+
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var returnedResponse = okResult.Value.Should().BeOfType<InstituteDetailResponse>().Subject;
         returnedResponse.Success.Should().BeTrue();
@@ -312,10 +312,10 @@ public class InstitutesControllerTests
     [Fact]
     public async Task GetById_InvalidId_ReturnsBadRequest()
     {
-        
+
         var result = await _controller.GetById(0);
 
-        
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteDetailResponse>().Subject;
         response.Success.Should().BeFalse();
@@ -325,10 +325,10 @@ public class InstitutesControllerTests
     [Fact]
     public async Task GetById_NegativeId_ReturnsBadRequest()
     {
-        
+
         var result = await _controller.GetById(-1);
 
-        
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteDetailResponse>().Subject;
         response.Success.Should().BeFalse();
@@ -337,7 +337,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task GetById_NotFound_ReturnsNotFound()
     {
-        
+
         var response = new InstituteDetailResponse
         {
             Success = false,
@@ -349,10 +349,10 @@ public class InstitutesControllerTests
             .Setup(x => x.GetInstituteByIdAsync(999))
             .ReturnsAsync(response);
 
-        
+
         var result = await _controller.GetById(999);
 
-        
+
         var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
         var returnedResponse = notFoundResult.Value.Should().BeOfType<InstituteDetailResponse>().Subject;
         returnedResponse.Success.Should().BeFalse();

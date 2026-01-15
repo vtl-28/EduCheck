@@ -26,21 +26,21 @@ public class InstituteService : IInstituteService
             var query = request.Query.Trim();
             var isAccreditationNumberSearch = IsAccreditationNumber(query);
 
-            
+
             var institutesQuery = _context.Institutes
                 .AsNoTracking()
                 .Where(i => i.IsActive);
 
-        
+
             if (isAccreditationNumberSearch)
             {
-               
+
                 institutesQuery = institutesQuery
                     .Where(i => i.AccreditationNumber.ToLower() == query.ToLower());
             }
             else
             {
-                
+
                 institutesQuery = institutesQuery
                     .Where(i => i.InstitutionName.ToLower().Contains(query.ToLower()));
             }
@@ -52,11 +52,11 @@ public class InstituteService : IInstituteService
                     .Where(i => i.Province != null &&
                                 i.Province.ToLower() == request.Province.ToLower());
             }
-            
+
 
             var totalCount = await institutesQuery.CountAsync();
 
-            
+
             var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
             var skip = (request.Page - 1) * request.PageSize;
 
@@ -85,7 +85,7 @@ public class InstituteService : IInstituteService
             _logger.LogInformation("Found {Count} institutes matching query: {Query}",
                 totalCount, request.Query);
 
-            
+
             var response = new InstituteSearchResponse
             {
                 Success = true,
@@ -107,7 +107,7 @@ public class InstituteService : IInstituteService
                 }
             };
 
-            
+
             if (totalCount == 0)
             {
                 response.Data.Suggestions = new SearchSuggestions
@@ -201,13 +201,13 @@ public class InstituteService : IInstituteService
         if (string.IsNullOrWhiteSpace(query))
             return false;
 
-       
+
         var hasDigits = query.Any(char.IsDigit);
 
-        
+
         var hasSpaces = query.Contains(' ');
 
-     
+
         var digitCount = query.Count(char.IsDigit);
         var letterCount = query.Count(char.IsLetter);
 
