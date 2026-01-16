@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Security.Claims;
 
 namespace EduCheck.Tests.Controllers;
 
@@ -20,6 +21,17 @@ public class InstitutesControllerTests
         _instituteServiceMock = new Mock<IInstituteService>();
         _loggerMock = new Mock<ILogger<InstitutesController>>();
         _controller = new InstitutesController(_instituteServiceMock.Object, _loggerMock.Object);
+
+        var userId = Guid.NewGuid();
+        var claims = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+        }, "Test"));
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claims }
+        };
     }
 
     #region Search Tests
@@ -50,9 +62,8 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.IsAny<InstituteSearchRequest>()))
+            .Setup(x => x.SearchInstitutesAsync(It.IsAny<InstituteSearchRequest>(), It.IsAny<Guid?>()))
             .ReturnsAsync(response);
-
 
         var result = await _controller.Search("Test");
 
@@ -66,9 +77,7 @@ public class InstitutesControllerTests
     [Fact]
     public async Task Search_EmptyQuery_ReturnsBadRequest()
     {
-
         var result = await _controller.Search("");
-
 
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
@@ -94,6 +103,7 @@ public class InstitutesControllerTests
 
         var result = await _controller.Search("A");
 
+
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
         response.Success.Should().BeFalse();
@@ -106,9 +116,7 @@ public class InstitutesControllerTests
 
         var longQuery = new string('A', 256);
 
-
         var result = await _controller.Search(longQuery);
-
 
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var response = badRequestResult.Value.Should().BeOfType<InstituteSearchResponse>().Subject;
@@ -135,17 +143,17 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r =>
-                r.Province == "Gauteng")))
+            .Setup(x => x.SearchInstitutesAsync(
+                It.Is<InstituteSearchRequest>(r => r.Province == "Gauteng"),
+                It.IsAny<Guid?>()))
             .ReturnsAsync(response);
-
 
         var result = await _controller.Search("Test", "Gauteng");
 
-
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
-            It.Is<InstituteSearchRequest>(r => r.Province == "Gauteng")), Times.Once);
+            It.Is<InstituteSearchRequest>(r => r.Province == "Gauteng"),
+            It.IsAny<Guid?>()), Times.Once);
     }
 
     [Fact]
@@ -168,17 +176,18 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r =>
-                r.Page == 2 && r.PageSize == 20)))
+            .Setup(x => x.SearchInstitutesAsync(
+                It.Is<InstituteSearchRequest>(r => r.Page == 2 && r.PageSize == 20),
+                It.IsAny<Guid?>()))
             .ReturnsAsync(response);
 
 
         var result = await _controller.Search("Test", null, 2, 20);
 
-
         result.Should().BeOfType<OkObjectResult>();
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
-            It.Is<InstituteSearchRequest>(r => r.Page == 2 && r.PageSize == 20)), Times.Once);
+            It.Is<InstituteSearchRequest>(r => r.Page == 2 && r.PageSize == 20),
+            It.IsAny<Guid?>()), Times.Once);
     }
 
     [Fact]
@@ -197,16 +206,17 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r => r.PageSize == 50)))
+            .Setup(x => x.SearchInstitutesAsync(
+                It.Is<InstituteSearchRequest>(r => r.PageSize == 50),
+                It.IsAny<Guid?>()))
             .ReturnsAsync(response);
-
 
         var result = await _controller.Search("Test", null, 1, 100);
 
-
         result.Should().BeOfType<OkObjectResult>();
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
-            It.Is<InstituteSearchRequest>(r => r.PageSize == 50)), Times.Once);
+            It.Is<InstituteSearchRequest>(r => r.PageSize == 50),
+            It.IsAny<Guid?>()), Times.Once);
     }
 
     [Fact]
@@ -225,7 +235,9 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.Is<InstituteSearchRequest>(r => r.Page == 1)))
+            .Setup(x => x.SearchInstitutesAsync(
+                It.Is<InstituteSearchRequest>(r => r.Page == 1),
+                It.IsAny<Guid?>()))
             .ReturnsAsync(response);
 
 
@@ -234,7 +246,8 @@ public class InstitutesControllerTests
 
         result.Should().BeOfType<OkObjectResult>();
         _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
-            It.Is<InstituteSearchRequest>(r => r.Page == 1)), Times.Once);
+            It.Is<InstituteSearchRequest>(r => r.Page == 1),
+            It.IsAny<Guid?>()), Times.Once);
     }
 
     [Fact]
@@ -258,7 +271,7 @@ public class InstitutesControllerTests
         };
 
         _instituteServiceMock
-            .Setup(x => x.SearchInstitutesAsync(It.IsAny<InstituteSearchRequest>()))
+            .Setup(x => x.SearchInstitutesAsync(It.IsAny<InstituteSearchRequest>(), It.IsAny<Guid?>()))
             .ReturnsAsync(response);
 
 
@@ -271,6 +284,35 @@ public class InstitutesControllerTests
         returnedResponse.Data!.Institutes.Should().BeEmpty();
         returnedResponse.Data.Suggestions.Should().NotBeNull();
         returnedResponse.Data.Suggestions!.ReportFraud.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Search_PassesUserIdToService()
+    {
+
+        var response = new InstituteSearchResponse
+        {
+            Success = true,
+            Message = "Found",
+            Data = new InstituteSearchData
+            {
+                Institutes = new List<InstituteDto>(),
+                Pagination = new PaginationDto()
+            }
+        };
+
+        _instituteServiceMock
+            .Setup(x => x.SearchInstitutesAsync(
+                It.IsAny<InstituteSearchRequest>(),
+                It.Is<Guid?>(id => id.HasValue)))
+            .ReturnsAsync(response);
+
+        var result = await _controller.Search("Test");
+
+        result.Should().BeOfType<OkObjectResult>();
+        _instituteServiceMock.Verify(x => x.SearchInstitutesAsync(
+            It.IsAny<InstituteSearchRequest>(),
+            It.Is<Guid?>(id => id.HasValue)), Times.Once);
     }
 
     #endregion
@@ -301,7 +343,6 @@ public class InstitutesControllerTests
 
         var result = await _controller.GetById(1);
 
-
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var returnedResponse = okResult.Value.Should().BeOfType<InstituteDetailResponse>().Subject;
         returnedResponse.Success.Should().BeTrue();
@@ -325,7 +366,6 @@ public class InstitutesControllerTests
     [Fact]
     public async Task GetById_NegativeId_ReturnsBadRequest()
     {
-
         var result = await _controller.GetById(-1);
 
 
@@ -348,7 +388,6 @@ public class InstitutesControllerTests
         _instituteServiceMock
             .Setup(x => x.GetInstituteByIdAsync(999))
             .ReturnsAsync(response);
-
 
         var result = await _controller.GetById(999);
 

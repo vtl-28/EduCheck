@@ -1,4 +1,5 @@
 ﻿using EduCheck.Application.DTOs.Institute;
+using EduCheck.Application.Interfaces;
 using EduCheck.Domain.Entities;
 using EduCheck.Infrastructure.Data;
 using EduCheck.Infrastructure.Services;
@@ -11,10 +12,12 @@ namespace EduCheck.Tests.Services;
 
 public class InstituteServiceTests
 {
+    private readonly Mock<ISearchHistoryService> _searchHistoryServiceMock;
     private readonly Mock<ILogger<InstituteService>> _loggerMock;
 
     public InstituteServiceTests()
     {
+        _searchHistoryServiceMock = new Mock<ISearchHistoryService>();
         _loggerMock = new Mock<ILogger<InstituteService>>();
     }
 
@@ -125,7 +128,8 @@ public class InstituteServiceTests
 
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context); ;
 
         var request = new InstituteSearchRequest
         {
@@ -151,7 +155,8 @@ public class InstituteServiceTests
 
         await using var context = CreateInMemoryDbContext();
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -173,8 +178,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -198,8 +205,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -222,8 +231,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -248,8 +259,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -272,8 +285,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -299,8 +314,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -322,8 +339,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -351,8 +370,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -377,8 +398,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -402,8 +425,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
         var request = new InstituteSearchRequest
         {
@@ -431,8 +456,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
 
         var result = await service.GetInstituteByIdAsync(1);
@@ -451,8 +478,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
 
         var result = await service.GetInstituteByIdAsync(999);
@@ -469,8 +498,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
 
         var result = await service.GetInstituteByIdAsync(5);
@@ -486,8 +517,10 @@ public class InstituteServiceTests
     {
 
         await using var context = CreateInMemoryDbContext();
+
         await SeedTestInstitutes(context);
-        var service = new InstituteService(context, _loggerMock.Object);
+
+        var service = CreateService(context);
 
 
         var result = await service.GetInstituteByIdAsync(1);
@@ -509,4 +542,9 @@ public class InstituteServiceTests
     }
 
     #endregion
+
+    private InstituteService CreateService(ApplicationDbContext context)
+    {
+        return new InstituteService(context, _searchHistoryServiceMock.Object, _loggerMock.Object);
+    }
 }

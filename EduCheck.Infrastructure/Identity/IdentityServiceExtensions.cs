@@ -2,10 +2,10 @@
 using EduCheck.Application.Interfaces;
 using EduCheck.Domain.Entities;
 using EduCheck.Infrastructure.Data;
+using EduCheck.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using EduCheck.Infrastructure.Services;
 
 namespace EduCheck.Infrastructure.Identity;
 
@@ -23,11 +23,9 @@ public static class IdentityServiceExtensions
             options.Password.RequiredLength = 8;
             options.Password.RequiredUniqueChars = 4;
 
-
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.AllowedForNewUsers = true;
-
 
             options.User.AllowedUserNameCharacters =
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
@@ -43,9 +41,14 @@ public static class IdentityServiceExtensions
 
         services.AddHttpClient();
 
+        services.AddMemoryCache();
+
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        //services.AddScoped<IFacebookAuthService, FacebookAuthService>();
+        services.AddScoped<ICacheService, MemoryCacheService>();
+        services.AddScoped<ISearchHistoryService, SearchHistoryService>();
         services.AddScoped<IInstituteService, InstituteService>();
 
         return services;

@@ -9,15 +9,20 @@ namespace EduCheck.Infrastructure.Services;
 public class InstituteService : IInstituteService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ISearchHistoryService _searchHistoryService;
     private readonly ILogger<InstituteService> _logger;
 
-    public InstituteService(ApplicationDbContext context, ILogger<InstituteService> logger)
+    public InstituteService(
+        ApplicationDbContext context,
+        ISearchHistoryService searchHistoryService,
+        ILogger<InstituteService> logger)
     {
         _context = context;
+        _searchHistoryService = searchHistoryService;
         _logger = logger;
     }
 
-    public async Task<InstituteSearchResponse> SearchInstitutesAsync(InstituteSearchRequest request)
+    public async Task<InstituteSearchResponse> SearchInstitutesAsync(InstituteSearchRequest request, Guid? userId = null)
     {
         _logger.LogInformation("Searching institutes with query: {Query}", request.Query);
 
@@ -26,25 +31,20 @@ public class InstituteService : IInstituteService
             var query = request.Query.Trim();
             var isAccreditationNumberSearch = IsAccreditationNumber(query);
 
-
             var institutesQuery = _context.Institutes
                 .AsNoTracking()
                 .Where(i => i.IsActive);
 
-
             if (isAccreditationNumberSearch)
             {
-
                 institutesQuery = institutesQuery
                     .Where(i => i.AccreditationNumber.ToLower() == query.ToLower());
             }
             else
             {
-
                 institutesQuery = institutesQuery
                     .Where(i => i.InstitutionName.ToLower().Contains(query.ToLower()));
             }
-
 
             if (!string.IsNullOrWhiteSpace(request.Province))
             {
@@ -53,13 +53,10 @@ public class InstituteService : IInstituteService
                                 i.Province.ToLower() == request.Province.ToLower());
             }
 
-
             var totalCount = await institutesQuery.CountAsync();
-
 
             var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
             var skip = (request.Page - 1) * request.PageSize;
-
 
             var institutes = await institutesQuery
                 .OrderBy(i => i.InstitutionName)
@@ -85,6 +82,13 @@ public class InstituteService : IInstituteService
             _logger.LogInformation("Found {Count} institutes matching query: {Query}",
                 totalCount, request.Query);
 
+            if (userId.HasValue && institutes.Count > 0)
+            {
+                foreach (var institute in institutes)
+                {
+                    await _searchHistoryService.RecordSearchAsync(userId.Value, institute.Id);
+                }
+            }
 
             var response = new InstituteSearchResponse
             {
@@ -106,7 +110,6 @@ public class InstituteService : IInstituteService
                     }
                 }
             };
-
 
             if (totalCount == 0)
             {
@@ -192,22 +195,13 @@ public class InstituteService : IInstituteService
         }
     }
 
-    /// <summary>
-    /// Determines if the search query looks like an accreditation number.
-    /// Accreditation numbers typically contain numbers and spaces (e.g., "16 SCH01 00174")
-    /// </summary>
     private static bool IsAccreditationNumber(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
             return false;
 
-
         var hasDigits = query.Any(char.IsDigit);
-
-
         var hasSpaces = query.Contains(' ');
-
-
         var digitCount = query.Count(char.IsDigit);
         var letterCount = query.Count(char.IsLetter);
 

@@ -5,20 +5,14 @@ namespace EduCheck.Domain.Entities;
 
 public class InstituteSearchHistory
 {
-    [Key]
     public int Id { get; set; }
-
-    [Required]
-    public Guid StudentId { get; set; }
-
-    [Required]
+    public Guid UserId { get; set; }
     public int InstituteId { get; set; }
 
     public DateTime SearchedAt { get; set; } = DateTime.UtcNow;
 
-    [ForeignKey(nameof(StudentId))]
-    public virtual Student Student { get; set; } = null!;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    [ForeignKey(nameof(InstituteId))]
+    public virtual ApplicationUser User { get; set; } = null!;
     public virtual Institute Institute { get; set; } = null!;
 }

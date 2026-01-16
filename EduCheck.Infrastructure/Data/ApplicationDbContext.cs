@@ -13,7 +13,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     {
     }
 
-    // DbSets
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -27,7 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply all configurations
+
         ConfigureIdentityTables(modelBuilder);
         ConfigureApplicationUser(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
@@ -42,7 +41,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     private static void ConfigureIdentityTables(ModelBuilder modelBuilder)
     {
-        // Rename Identity tables to lowercase with underscores (PostgreSQL convention)
+
         modelBuilder.Entity<ApplicationUser>().ToTable("users");
         modelBuilder.Entity<IdentityRole<Guid>>().ToTable("roles");
         modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("user_roles");
@@ -78,18 +77,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
+
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.Role);
             entity.HasIndex(e => e.IsActive);
 
-            // One-to-one with Student
+
             entity.HasOne(e => e.Student)
                 .WithOne(s => s.User)
                 .HasForeignKey<Student>(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // One-to-one with Admin
+
             entity.HasOne(e => e.Admin)
                 .WithOne(a => a.User)
                 .HasForeignKey<Admin>(a => a.UserId)
@@ -124,12 +123,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
             entity.HasIndex(e => e.TokenHash).IsUnique();
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.ExpiresAt);
 
-            // Relationship
+
             entity.HasOne(e => e.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(e => e.UserId)
@@ -163,7 +161,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
             entity.HasIndex(e => e.UserId).IsUnique();
         });
     }
@@ -193,7 +190,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasIndex(e => e.AdminLevel);
         });
@@ -245,7 +241,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
             entity.HasIndex(e => e.InstitutionName);
             entity.HasIndex(e => e.AccreditationNumber).IsUnique();
             entity.HasIndex(e => e.ProviderType);
@@ -262,28 +257,43 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
             entity.HasKey(e => e.Id);
 
+            entity.Property(e => e.Id)
+                .HasColumnName("id");
+
+            entity.Property(e => e.UserId)
+                .HasColumnName("user_id")
+                .IsRequired();
+
+            entity.Property(e => e.InstituteId)
+                .HasColumnName("institute_id")
+                .IsRequired();
+
             entity.Property(e => e.SearchedAt)
-                .HasDefaultValueSql("NOW()");
+                .HasColumnName("searched_at")
+                .IsRequired();
 
-            // Unique constraint: one entry per student-institute pair
-            entity.HasIndex(e => new { e.StudentId, e.InstituteId }).IsUnique();
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .IsRequired();
 
-            // Index for user history queries
-            entity.HasIndex(e => new { e.StudentId, e.SearchedAt });
 
-            // Index for cleanup job
-            entity.HasIndex(e => e.SearchedAt);
-
-            // Relationships
-            entity.HasOne(e => e.Student)
-                .WithMany(s => s.SearchHistory)
-                .HasForeignKey(e => e.StudentId)
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
 
             entity.HasOne(e => e.Institute)
                 .WithMany(i => i.SearchHistory)
                 .HasForeignKey(e => e.InstituteId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+
+            entity.HasIndex(e => e.UserId)
+                .HasDatabaseName("ix_institute_search_history_user_id");
+
+            entity.HasIndex(e => new { e.UserId, e.InstituteId })
+                .HasDatabaseName("ix_institute_search_history_user_institute");
         });
     }
 
@@ -298,13 +308,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Unique constraint: one favorite per student-institute pair
             entity.HasIndex(e => new { e.StudentId, e.InstituteId }).IsUnique();
 
-            // Index for user favorites list
+
             entity.HasIndex(e => new { e.StudentId, e.CreatedAt });
 
-            // Relationships
+
             entity.HasOne(e => e.Student)
                 .WithMany(s => s.Favorites)
                 .HasForeignKey(e => e.StudentId)
@@ -357,13 +366,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
+
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.Severity);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.StudentId);
 
-            // Relationships
+
             entity.HasOne(e => e.Student)
                 .WithMany(s => s.FraudReports)
                 .HasForeignKey(e => e.StudentId)
@@ -397,11 +406,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("NOW()");
 
-            // Indexes
+
             entity.HasIndex(e => new { e.FraudReportId, e.CreatedAt });
             entity.HasIndex(e => e.AdminId);
 
-            // Relationships
+
             entity.HasOne(e => e.FraudReport)
                 .WithMany(r => r.Actions)
                 .HasForeignKey(e => e.FraudReportId)
@@ -414,7 +423,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         });
     }
 
-    // Override SaveChanges to auto-update UpdatedAt
+
     public override int SaveChanges()
     {
         UpdateTimestamps();

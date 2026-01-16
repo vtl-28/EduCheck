@@ -2,6 +2,7 @@
 using EduCheck.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EduCheck.API.Controllers;
 
@@ -22,11 +23,6 @@ public class InstitutesController : ControllerBase
     /// <summary>
     /// Search institutes by name or accreditation number
     /// </summary>
-    /// <param name="query">Search query (name or accreditation number)</param>
-    /// <param name="province">Optional province filter</param>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="pageSize">Results per page (default: 10, max: 50)</param>
-    /// <returns>List of matching institutes</returns>
     [HttpGet("search")]
     [ProducesResponseType(typeof(InstituteSearchResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(InstituteSearchResponse), StatusCodes.Status400BadRequest)]
@@ -37,7 +33,7 @@ public class InstitutesController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
-
+        // Validate query
         if (string.IsNullOrWhiteSpace(query))
         {
             return BadRequest(new InstituteSearchResponse
@@ -68,7 +64,7 @@ public class InstitutesController : ControllerBase
             });
         }
 
-
+        // Validate pagination
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 50) pageSize = 50;
@@ -81,7 +77,15 @@ public class InstitutesController : ControllerBase
             PageSize = pageSize
         };
 
-        var result = await _instituteService.SearchInstitutesAsync(request);
+        // Get user ID from claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Guid? userId = null;
+        if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+
+        var result = await _instituteService.SearchInstitutesAsync(request, userId);
 
         return Ok(result);
     }
@@ -89,8 +93,6 @@ public class InstitutesController : ControllerBase
     /// <summary>
     /// Get institute details by ID
     /// </summary>
-    /// <param name="id">Institute ID</param>
-    /// <returns>Institute details</returns>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(InstituteDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(InstituteDetailResponse), StatusCodes.Status404NotFound)]
