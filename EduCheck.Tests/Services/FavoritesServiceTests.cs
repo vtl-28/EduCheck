@@ -19,13 +19,16 @@ public class FavoritesServiceTests : IDisposable
     private readonly Mock<ILogger<FavoritesService>> _loggerMock;
     private readonly FavoritesService _service;
 
-    // Test data
+    // User IDs (from JWT token)
     private readonly Guid _testUserId = Guid.NewGuid();
     private readonly Guid _otherUserId = Guid.NewGuid();
 
+    // Student IDs (from students table)
+    private Guid _testStudentId;
+    private Guid _otherStudentId;
+
     public FavoritesServiceTests()
     {
-        // Setup in-memory database
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
@@ -34,7 +37,6 @@ public class FavoritesServiceTests : IDisposable
         _cacheServiceMock = new Mock<ICacheService>();
         _loggerMock = new Mock<ILogger<FavoritesService>>();
 
-        // Setup cache mock to return null (cache miss) by default
         _cacheServiceMock.Setup(c => c.GetAsync<List<FavoriteInstituteDto>>(It.IsAny<string>()))
             .ReturnsAsync((List<FavoriteInstituteDto>?)null);
 
@@ -45,6 +47,27 @@ public class FavoritesServiceTests : IDisposable
 
     private void SeedTestData()
     {
+        // Create Student IDs
+        _testStudentId = Guid.NewGuid();
+        _otherStudentId = Guid.NewGuid();
+
+        // Add test students (linking UserId to StudentId)
+        _context.Students.AddRange(new[]
+        {
+            new Student
+            {
+                Id = _testStudentId,
+                UserId = _testUserId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Student
+            {
+                Id = _otherStudentId,
+                UserId = _otherUserId,
+                CreatedAt = DateTime.UtcNow
+            }
+        });
+
         // Add test institutes
         _context.Institutes.AddRange(new[]
         {
@@ -91,10 +114,8 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetUserFavoritesAsync_ReturnsEmptyList_WhenUserHasNoFavorites()
     {
-        // Act
         var result = await _service.GetUserFavoritesAsync(_testUserId);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Favorites.Should().BeEmpty();
@@ -104,39 +125,37 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetUserFavoritesAsync_ReturnsFavorites_SortedByMostRecentFirst()
     {
-        // Arrange - Add favorites with different timestamps
+        // Use StudentId (not UserId) when adding directly to database
         _context.FavoriteInstitutes.AddRange(new[]
         {
             new FavoriteInstitute
             {
-                StudentId = _testUserId,
+                StudentId = _testStudentId,
                 InstituteId = 1,
                 CreatedAt = DateTime.UtcNow.AddDays(-2)
             },
             new FavoriteInstitute
             {
-                StudentId = _testUserId,
+                StudentId = _testStudentId,
                 InstituteId = 2,
                 CreatedAt = DateTime.UtcNow.AddDays(-1)
             },
             new FavoriteInstitute
             {
-                StudentId = _testUserId,
+                StudentId = _testStudentId,
                 InstituteId = 3,
                 CreatedAt = DateTime.UtcNow
             }
         });
         await _context.SaveChangesAsync();
 
-        // Act
+        // Pass UserId to service (it will look up StudentId internally)
         var result = await _service.GetUserFavoritesAsync(_testUserId);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data!.Favorites.Should().HaveCount(3);
         result.Data.Pagination.TotalCount.Should().Be(3);
 
-        // Most recent first
         result.Data.Favorites[0].Institute.Id.Should().Be(3);
         result.Data.Favorites[1].Institute.Id.Should().Be(2);
         result.Data.Favorites[2].Institute.Id.Should().Be(1);
@@ -145,22 +164,19 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetUserFavoritesAsync_ReturnsPaginatedResults()
     {
-        // Arrange - Add 5 favorites
         for (int i = 1; i <= 3; i++)
         {
             _context.FavoriteInstitutes.Add(new FavoriteInstitute
             {
-                StudentId = _testUserId,
+                StudentId = _testStudentId,
                 InstituteId = i,
                 CreatedAt = DateTime.UtcNow.AddMinutes(i)
             });
         }
         await _context.SaveChangesAsync();
 
-        // Act - Get page 1 with size 2
         var result = await _service.GetUserFavoritesAsync(_testUserId, page: 1, pageSize: 2);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data!.Favorites.Should().HaveCount(2);
         result.Data.Pagination.CurrentPage.Should().Be(1);
@@ -174,7 +190,6 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetUserFavoritesAsync_UsesCachedData_WhenAvailable()
     {
-        // Arrange - Setup cache to return data
         var cachedData = new List<FavoriteInstituteDto>
         {
             new FavoriteInstituteDto
@@ -188,16 +203,25 @@ public class FavoritesServiceTests : IDisposable
         _cacheServiceMock.Setup(c => c.GetAsync<List<FavoriteInstituteDto>>($"favorites:{_testUserId}"))
             .ReturnsAsync(cachedData);
 
-        // Act
         var result = await _service.GetUserFavoritesAsync(_testUserId);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data!.Favorites.Should().HaveCount(1);
         result.Data.Favorites[0].Institute.InstitutionName.Should().Be("Cached Institute");
 
-        // Verify cache was checked
         _cacheServiceMock.Verify(c => c.GetAsync<List<FavoriteInstituteDto>>($"favorites:{_testUserId}"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserFavoritesAsync_ReturnsError_WhenStudentNotFound()
+    {
+        // Use a random UserId that has no associated Student
+        var unknownUserId = Guid.NewGuid();
+
+        var result = await _service.GetUserFavoritesAsync(unknownUserId);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("Student profile not found");
     }
 
     #endregion
@@ -207,31 +231,26 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task AddFavoriteAsync_AddsFavoriteSuccessfully()
     {
-        // Act
         var result = await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Institute.Id.Should().Be(1);
         result.Data.Institute.InstitutionName.Should().Be("Test Institute 1");
 
-        // Verify in database
+        // Verify using StudentId in database
         var favorite = await _context.FavoriteInstitutes
-            .FirstOrDefaultAsync(f => f.StudentId == _testUserId && f.InstituteId == 1);
+            .FirstOrDefaultAsync(f => f.StudentId == _testStudentId && f.InstituteId == 1);
         favorite.Should().NotBeNull();
     }
 
     [Fact]
     public async Task AddFavoriteAsync_ReturnsError_WhenAlreadyFavorited()
     {
-        // Arrange - Add favorite first
         await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Act - Try to add again
         var result = await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Message.Should().Contain("already");
     }
@@ -239,21 +258,28 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task AddFavoriteAsync_ReturnsError_WhenInstituteNotFound()
     {
-        // Act
         var result = await _service.AddFavoriteAsync(_testUserId, 999);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Message.Should().Contain("not found");
     }
 
     [Fact]
+    public async Task AddFavoriteAsync_ReturnsError_WhenStudentNotFound()
+    {
+        var unknownUserId = Guid.NewGuid();
+
+        var result = await _service.AddFavoriteAsync(unknownUserId, 1);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("Student profile not found");
+    }
+
+    [Fact]
     public async Task AddFavoriteAsync_InvalidatesCache()
     {
-        // Act
         await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Assert - Verify cache was invalidated
         _cacheServiceMock.Verify(c => c.RemoveAsync($"favorites:{_testUserId}"), Times.Once);
     }
 
@@ -264,43 +290,45 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task RemoveFavoriteAsync_RemovesFavoriteSuccessfully()
     {
-        // Arrange
         await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Act
         var result = await _service.RemoveFavoriteAsync(_testUserId, 1);
 
-        // Assert
         result.Success.Should().BeTrue();
 
-        // Verify removed from database
         var favorite = await _context.FavoriteInstitutes
-            .FirstOrDefaultAsync(f => f.StudentId == _testUserId && f.InstituteId == 1);
+            .FirstOrDefaultAsync(f => f.StudentId == _testStudentId && f.InstituteId == 1);
         favorite.Should().BeNull();
     }
 
     [Fact]
     public async Task RemoveFavoriteAsync_ReturnsError_WhenNotFavorited()
     {
-        // Act
         var result = await _service.RemoveFavoriteAsync(_testUserId, 1);
 
-        // Assert
         result.Success.Should().BeFalse();
         result.Message.Should().Contain("not found");
     }
 
     [Fact]
+    public async Task RemoveFavoriteAsync_ReturnsError_WhenStudentNotFound()
+    {
+        var unknownUserId = Guid.NewGuid();
+
+        var result = await _service.RemoveFavoriteAsync(unknownUserId, 1);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("Student profile not found");
+    }
+
+    [Fact]
     public async Task RemoveFavoriteAsync_InvalidatesCache()
     {
-        // Arrange
         await _service.AddFavoriteAsync(_testUserId, 1);
-        _cacheServiceMock.Invocations.Clear(); // Reset mock
+        _cacheServiceMock.Invocations.Clear();
 
-        // Act
         await _service.RemoveFavoriteAsync(_testUserId, 1);
 
-        // Assert - Verify cache was invalidated
         _cacheServiceMock.Verify(c => c.RemoveAsync($"favorites:{_testUserId}"), Times.Once);
     }
 
@@ -311,13 +339,10 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetFavoriteStatusAsync_ReturnsTrue_WhenFavorited()
     {
-        // Arrange
         await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Act
         var result = await _service.GetFavoriteStatusAsync(_testUserId, 1);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data!.IsFavorited.Should().BeTrue();
         result.Data.FavoriteId.Should().NotBeNull();
@@ -327,14 +352,23 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetFavoriteStatusAsync_ReturnsFalse_WhenNotFavorited()
     {
-        // Act
         var result = await _service.GetFavoriteStatusAsync(_testUserId, 1);
 
-        // Assert
         result.Success.Should().BeTrue();
         result.Data!.IsFavorited.Should().BeFalse();
         result.Data.FavoriteId.Should().BeNull();
         result.Data.FavoritedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetFavoriteStatusAsync_ReturnsError_WhenStudentNotFound()
+    {
+        var unknownUserId = Guid.NewGuid();
+
+        var result = await _service.GetFavoriteStatusAsync(unknownUserId, 1);
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("Student profile not found");
     }
 
     #endregion
@@ -344,25 +378,23 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetUserFavoritesAsync_OnlyReturnsCurrentUsersFavorites()
     {
-        // Arrange - Add favorites for different users
+        // Use StudentIds when adding directly to database
         _context.FavoriteInstitutes.Add(new FavoriteInstitute
         {
-            StudentId = _testUserId,
+            StudentId = _testStudentId,
             InstituteId = 1,
             CreatedAt = DateTime.UtcNow
         });
         _context.FavoriteInstitutes.Add(new FavoriteInstitute
         {
-            StudentId = _otherUserId,
+            StudentId = _otherStudentId,
             InstituteId = 2,
             CreatedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
 
-        // Act - Get favorites for test user
         var result = await _service.GetUserFavoritesAsync(_testUserId);
 
-        // Assert - Should only see test user's favorites
         result.Data!.Favorites.Should().HaveCount(1);
         result.Data.Favorites[0].Institute.Id.Should().Be(1);
         result.Data.Favorites.Should().NotContain(f => f.Institute.Id == 2);
@@ -371,43 +403,36 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task RemoveFavoriteAsync_CannotRemoveOtherUsersFavorite()
     {
-        // Arrange - Add favorite for other user
         _context.FavoriteInstitutes.Add(new FavoriteInstitute
         {
-            StudentId = _otherUserId,
+            StudentId = _otherStudentId,
             InstituteId = 1,
             CreatedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
 
-        // Act - Try to remove other user's favorite using test user's ID
         var result = await _service.RemoveFavoriteAsync(_testUserId, 1);
 
-        // Assert - Should return not found
         result.Success.Should().BeFalse();
 
-        // Verify other user's favorite still exists
         var favorite = await _context.FavoriteInstitutes
-            .FirstOrDefaultAsync(f => f.StudentId == _otherUserId && f.InstituteId == 1);
+            .FirstOrDefaultAsync(f => f.StudentId == _otherStudentId && f.InstituteId == 1);
         favorite.Should().NotBeNull();
     }
 
     [Fact]
     public async Task GetFavoriteStatusAsync_ReturnsFalse_ForOtherUsersFavorite()
     {
-        // Arrange - Add favorite for other user
         _context.FavoriteInstitutes.Add(new FavoriteInstitute
         {
-            StudentId = _otherUserId,
+            StudentId = _otherStudentId,
             InstituteId = 1,
             CreatedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
 
-        // Act - Check status for test user
         var result = await _service.GetFavoriteStatusAsync(_testUserId, 1);
 
-        // Assert - Should return false for test user
         result.Data!.IsFavorited.Should().BeFalse();
     }
 
@@ -418,26 +443,20 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public async Task GetUserFavoritesAsync_ClampsPageSizeToMax50()
     {
-        // Arrange
         await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Act - Request with pageSize > 50
         var result = await _service.GetUserFavoritesAsync(_testUserId, page: 1, pageSize: 100);
 
-        // Assert - PageSize should be clamped to 50
         result.Data!.Pagination.PageSize.Should().Be(50);
     }
 
     [Fact]
     public async Task GetUserFavoritesAsync_HandlesNegativePageNumber()
     {
-        // Arrange
         await _service.AddFavoriteAsync(_testUserId, 1);
 
-        // Act - Request with negative page
         var result = await _service.GetUserFavoritesAsync(_testUserId, page: -5, pageSize: 10);
 
-        // Assert - Should default to page 1
         result.Data!.Pagination.CurrentPage.Should().Be(1);
     }
 
