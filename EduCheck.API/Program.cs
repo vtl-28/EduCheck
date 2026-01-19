@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using EduCheck.Infrastructure.Data;
 using EduCheck.Infrastructure.Identity;
 using EduCheck.Infrastructure.SeedData;
@@ -22,6 +23,35 @@ builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddRateLimiter(options =>
+{
+    // Favorites rate limiter: 20 requests per minute per user
+    options.AddPolicy("favorites", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name
+                          ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                          ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    // Global rejection handling
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            Success = false,
+            Message = "Too many requests. Please try again later.",
+            Errors = new[] { "Rate limit exceeded. Maximum 20 requests per minute." }
+        }, cancellationToken);
+    };
+});
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -79,6 +109,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();

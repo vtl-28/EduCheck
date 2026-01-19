@@ -29,6 +29,8 @@ public class ApplicationUser : IdentityUser<Guid>
     public virtual Student? Student { get; set; }
     public virtual Admin? Admin { get; set; }
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    // Add to the navigation properties section
+    //public virtual ICollection<FavoriteInstitute> Favorites { get; set; } = new List<FavoriteInstitute>();
 
 
     [NotMapped]

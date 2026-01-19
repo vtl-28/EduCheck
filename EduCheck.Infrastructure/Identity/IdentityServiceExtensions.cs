@@ -50,6 +50,7 @@ public static class IdentityServiceExtensions
         services.AddScoped<ICacheService, MemoryCacheService>();
         services.AddScoped<ISearchHistoryService, SearchHistoryService>();
         services.AddScoped<IInstituteService, InstituteService>();
+        services.AddScoped<IFavoritesService, FavoritesService>();
 
         return services;
     }
