@@ -33,7 +33,6 @@ public class InstitutesController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
-        // Validate query
         if (string.IsNullOrWhiteSpace(query))
         {
             return BadRequest(new InstituteSearchResponse
@@ -64,7 +63,6 @@ public class InstitutesController : ControllerBase
             });
         }
 
-        // Validate pagination
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 50) pageSize = 50;
@@ -77,7 +75,6 @@ public class InstitutesController : ControllerBase
             PageSize = pageSize
         };
 
-        // Get user ID from claims
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         Guid? userId = null;
         if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var parsedUserId))

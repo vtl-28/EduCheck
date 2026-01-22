@@ -51,6 +51,7 @@ public static class IdentityServiceExtensions
         services.AddScoped<ISearchHistoryService, SearchHistoryService>();
         services.AddScoped<IInstituteService, InstituteService>();
         services.AddScoped<IFavoritesService, FavoritesService>();
+        services.AddScoped<IFraudReportService, FraudReportService>();
 
         return services;
     }

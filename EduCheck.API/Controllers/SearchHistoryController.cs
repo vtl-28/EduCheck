@@ -12,8 +12,6 @@ namespace EduCheck.API.Controllers;
 [Authorize]
 public class SearchHistoryController : ControllerBase
 {
-    // adding comment to trigger ci/cd pipeline
-
     private readonly ISearchHistoryService _searchHistoryService;
     private readonly ILogger<SearchHistoryController> _logger;
     public SearchHistoryController(

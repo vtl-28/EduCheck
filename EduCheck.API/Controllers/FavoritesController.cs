@@ -204,10 +204,6 @@ public class FavoritesController : ControllerBase
         return Ok(result);
     }
 
-    // ============================================
-    // SECURITY HELPER
-    // ============================================
-
     /// <summary>
     /// Extracts user ID from JWT token claims.
     /// SECURITY: This is the ONLY place we get the user ID - never from request body/params.

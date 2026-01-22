@@ -8,6 +8,7 @@ public class FraudReport
 {
     [Key]
     public Guid Id { get; set; }
+
     public Guid? StudentId { get; set; }
 
     public int? InstituteId { get; set; }
