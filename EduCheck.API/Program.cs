@@ -5,8 +5,22 @@ using EduCheck.Infrastructure.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using EduCheck.API.HealthChecks;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using EduCheck.API.Configuration;
+using EduCheck.API.Metrics;
+using EduCheck.API.Middleware;
+using OpenTelemetry.Metrics;
+using EduCheck.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ============================================
+// Logging Configuration with OpenTelemetry
+// ============================================
+builder.Logging.AddTelemetryLogging(builder.Configuration);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -21,6 +35,43 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddScoped<DatabaseSeeder>();
 
 builder.Services.AddControllers();
+
+builder.Services.AddTelemetry(builder.Configuration);
+
+builder.Services.AddSingleton<BusinessMetrics>();
+
+// ============================================
+// Health Checks Configuration
+// ============================================
+builder.Services.AddSingleton<StartupHealthCheck>();
+builder.Services.AddHealthChecks()
+    // Liveness - Is the app running?
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
+    
+    // Database connectivity
+    .AddCheck<DatabaseHealthCheck>(
+        "database",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: new[] { "ready", "db" })
+    
+    // Memory check
+    .AddCheck<MemoryHealthCheck>(
+        "memory",
+        failureStatus: HealthStatus.Degraded,
+        tags: new[] { "ready" })
+    
+    // Startup check
+    .AddCheck<StartupHealthCheck>(
+        "startup",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: new[] { "ready" })
+    
+    // PostgreSQL direct check (backup)
+    .AddNpgSql(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        name: "postgresql",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: new[] { "ready", "db" });
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -88,6 +139,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// ============================================
+// Security Services
+// ============================================
+builder.Services.AddSecurityServices();
+builder.Services.AddSingleton<SecurityMetrics>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -106,11 +163,56 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();
+// ============================================
+// Security Monitoring Middleware
+// ============================================
+app.UseSecurityMonitoring();
+app.UseTelemetryEnrichment();
+// ============================================
+// Health Check Endpoints
+// ============================================
+
+// Liveness probe - Is the app running?
+// Used by: Kubernetes liveness probe, load balancer
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+// Readiness probe - Can it accept traffic?
+// Used by: Kubernetes readiness probe, load balancer
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+// Database health - Is the database connected?
+// Used by: Monitoring, debugging
+app.MapHealthChecks("/health/db", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("db"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+// Full health check - All checks
+// Used by: Detailed monitoring
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+// Mark application as ready after startup
+var startupHealthCheck = app.Services.GetRequiredService<StartupHealthCheck>();
+startupHealthCheck.SetReady();
+
+app.MapPrometheusScrapingEndpoint("/metrics");
 
 app.MapControllers();
 

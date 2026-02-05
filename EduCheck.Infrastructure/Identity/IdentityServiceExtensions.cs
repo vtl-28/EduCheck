@@ -6,6 +6,7 @@ using EduCheck.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using EduCheck.Infrastructure.Security;
 
 namespace EduCheck.Infrastructure.Identity;
 
