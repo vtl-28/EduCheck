@@ -234,6 +234,8 @@ appsettings.Development.json
 appsettings.Production.json
 appsettings.Staging.json
 appsettings.Local.json
+.env
+run-dev.sh
 
 # Keep base appsettings (no secrets)
 !appsettings.json
@@ -408,6 +410,8 @@ out/
 node_modules/
 dist/
 .angular/
+
+OTEL_DIAGNOSTICS.json
 
 # =============================================================================
 # End of .gitignore
