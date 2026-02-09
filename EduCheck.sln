@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduCheck.API", "EduCheck.API\EduCheck.API.csproj", "{7CB44A3B-47B3-4971-9E06-B14233CE7541}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduCheck.Domain", "EduCheck.Domain\EduCheck.Domain.csproj", "{2FBE27F7-B3A9-4962-8561-CCACFCCEC64B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduCheck.Application", "EduCheck.Application\EduCheck.Application.csproj", "{7E712D65-101E-4415-A2F0-E27A0325968B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduCheck.Infrastructure", "EduCheck.Infrastructure\EduCheck.Infrastructure.csproj", "{BD6945A6-EB8A-43C7-BEAE-EA27E93AC0AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduCheck.Tests", "EduCheck.Tests\EduCheck.Tests.csproj", "{5AD8682C-2704-4621-9DA4-156FFA909FDA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7CB44A3B-47B3-4971-9E06-B14233CE7541}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CB44A3B-47B3-4971-9E06-B14233CE7541}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CB44A3B-47B3-4971-9E06-B14233CE7541}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CB44A3B-47B3-4971-9E06-B14233CE7541}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FBE27F7-B3A9-4962-8561-CCACFCCEC64B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FBE27F7-B3A9-4962-8561-CCACFCCEC64B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FBE27F7-B3A9-4962-8561-CCACFCCEC64B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FBE27F7-B3A9-4962-8561-CCACFCCEC64B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E712D65-101E-4415-A2F0-E27A0325968B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E712D65-101E-4415-A2F0-E27A0325968B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E712D65-101E-4415-A2F0-E27A0325968B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E712D65-101E-4415-A2F0-E27A0325968B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD6945A6-EB8A-43C7-BEAE-EA27E93AC0AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD6945A6-EB8A-43C7-BEAE-EA27E93AC0AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD6945A6-EB8A-43C7-BEAE-EA27E93AC0AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD6945A6-EB8A-43C7-BEAE-EA27E93AC0AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AD8682C-2704-4621-9DA4-156FFA909FDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AD8682C-2704-4621-9DA4-156FFA909FDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AD8682C-2704-4621-9DA4-156FFA909FDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AD8682C-2704-4621-9DA4-156FFA909FDA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CEED7661-AFF8-4CE7-ADF4-6574F15939DE}
+	EndGlobalSection
+EndGlobal
