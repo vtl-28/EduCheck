@@ -8,7 +8,7 @@ public static class SecurityServiceExtensions
     {
         services.AddSingleton<ISecurityMonitoringService, SecurityMonitoringService>();
         services.AddSingleton<AttackPatternDetector>();
-        
+
         return services;
     }
 }

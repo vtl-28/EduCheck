@@ -42,7 +42,7 @@ public class TelemetryEnrichmentMiddleware
         if (activity != null)
         {
             activity.SetTag("correlation_id", correlationId);
-            
+
             if (!string.IsNullOrEmpty(userId))
             {
                 activity.SetTag("user.id", userId);
@@ -51,7 +51,7 @@ public class TelemetryEnrichmentMiddleware
             {
                 activity.SetTag("user.role", userRole);
             }
-            
+
             // Add request info
             activity.SetTag("http.client_ip", context.Connection.RemoteIpAddress?.ToString());
             activity.SetTag("http.user_agent", context.Request.Headers.UserAgent.ToString());

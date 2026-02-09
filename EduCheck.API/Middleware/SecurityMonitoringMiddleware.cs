@@ -75,7 +75,7 @@ public class SecurityMonitoringMiddleware
             pathTraversal.IpAddress = ipAddress;
             pathTraversal.RequestPath = path;
             pathTraversal.UserAgent = context.Request.Headers.UserAgent.ToString();
-            
+
             await securityService.RecordAttackPatternAsync(pathTraversal);
             securityMetrics.RecordAttackPattern("PathTraversal");
 
@@ -89,6 +89,38 @@ public class SecurityMonitoringMiddleware
         }
 
         await _next(context);
+
+        // Record security metrics based on response status codes
+        var statusCode = context.Response.StatusCode;
+        var userId = context.User?.Identity?.Name;
+
+        if (statusCode == 401)
+        {
+            // Unauthorized - authentication failure
+            securityMetrics.RecordAuthFailure("unauthorized");
+
+            _logger.LogWarning(
+                "Authentication failure: IP: {IpAddress}, Path: {Path}, User: {User}",
+                ipAddress, path, userId ?? "anonymous");
+        }
+        else if (statusCode == 403)
+        {
+            // Forbidden - potential IDOR or authorization failure
+            securityMetrics.RecordIdorAttempt(path);
+
+            _logger.LogWarning(
+                "Authorization failure (potential IDOR): IP: {IpAddress}, Path: {Path}, User: {User}",
+                ipAddress, path, userId ?? "anonymous");
+        }
+        else if (statusCode == 429)
+        {
+            // Rate limit exceeded
+            securityMetrics.RecordRateLimitHit(path);
+
+            _logger.LogWarning(
+                "Rate limit exceeded: IP: {IpAddress}, Path: {Path}, User: {User}",
+                ipAddress, path, userId ?? "anonymous");
+        }
     }
 
     private async Task<SecurityEvent?> CheckForAttackPatterns(
@@ -109,14 +141,14 @@ public class SecurityMonitoringMiddleware
             sqlInjection.IpAddress = ipAddress;
             sqlInjection.UserAgent = userAgent;
             sqlInjection.RequestPath = path;
-            
+
             await securityService.RecordAttackPatternAsync(sqlInjection);
             securityMetrics.RecordAttackPattern("SQLInjection");
-            
+
             _logger.LogError(
                 "SQL Injection attempt detected. IP: {IpAddress}, Parameter: {Parameter}, Path: {Path}",
                 ipAddress, parameter, path);
-            
+
             return sqlInjection;
         }
 
@@ -127,14 +159,14 @@ public class SecurityMonitoringMiddleware
             xss.IpAddress = ipAddress;
             xss.UserAgent = userAgent;
             xss.RequestPath = path;
-            
+
             await securityService.RecordAttackPatternAsync(xss);
             securityMetrics.RecordAttackPattern("XSS");
-            
+
             _logger.LogError(
                 "XSS attempt detected. IP: {IpAddress}, Parameter: {Parameter}, Path: {Path}",
                 ipAddress, parameter, path);
-            
+
             return xss;
         }
 

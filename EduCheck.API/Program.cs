@@ -47,25 +47,25 @@ builder.Services.AddSingleton<StartupHealthCheck>();
 builder.Services.AddHealthChecks()
     // Liveness - Is the app running?
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
-    
+
     // Database connectivity
     .AddCheck<DatabaseHealthCheck>(
         "database",
         failureStatus: HealthStatus.Unhealthy,
         tags: new[] { "ready", "db" })
-    
+
     // Memory check
     .AddCheck<MemoryHealthCheck>(
         "memory",
         failureStatus: HealthStatus.Degraded,
         tags: new[] { "ready" })
-    
+
     // Startup check
     .AddCheck<StartupHealthCheck>(
         "startup",
         failureStatus: HealthStatus.Unhealthy,
         tags: new[] { "ready" })
-    
+
     // PostgreSQL direct check (backup)
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection")!,
@@ -151,6 +151,12 @@ using (var scope = app.Services.CreateScope())
 {
     var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
     await seeder.SeedAsync();
+
+    //  var tracerProvider = scope.ServiceProvider.GetService<OpenTelemetry.Trace.TracerProvider>();
+    // Console.WriteLine($"[DIAGNOSTIC] TracerProvider exists: {tracerProvider != null}");
+
+    // var meterProvider = scope.ServiceProvider.GetService<OpenTelemetry.Metrics.MeterProvider>();
+    // Console.WriteLine($"[DIAGNOSTIC] MeterProvider exists: {meterProvider != null}");
 }
 
 if (app.Environment.IsDevelopment())
@@ -212,7 +218,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 var startupHealthCheck = app.Services.GetRequiredService<StartupHealthCheck>();
 startupHealthCheck.SetReady();
 
-app.MapPrometheusScrapingEndpoint("/metrics");
+// app.MapPrometheusScrapingEndpoint("/metrics");
 
 app.MapControllers();
 

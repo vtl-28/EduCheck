@@ -11,7 +11,7 @@ namespace EduCheck.Infrastructure.Security;
 public class SecurityMonitoringService : ISecurityMonitoringService
 {
     private readonly ILogger<SecurityMonitoringService> _logger;
-    
+
     // In-memory tracking (replace with Redis in production)
     private readonly ConcurrentDictionary<string, List<DateTime>> _failedLoginsByIp = new();
     private readonly ConcurrentDictionary<string, List<DateTime>> _failedLoginsByEmail = new();
@@ -53,7 +53,7 @@ public class SecurityMonitoringService : ISecurityMonitoringService
                 _ => LogLevel.Information
             };
 
-            _logger.Log(logLevel, 
+            _logger.Log(logLevel,
                 "SECURITY: [{Category}] {EventType} - {Severity} severity from IP {IpAddress}",
                 securityEvent.Category,
                 securityEvent.EventType,
@@ -87,7 +87,7 @@ public class SecurityMonitoringService : ISecurityMonitoringService
                 {
                     bruteForceDetected = true;
                     _blockedIps[ipAddress] = now.AddMinutes(BlockDurationMinutes);
-                    
+
                     // Prepare event data inside lock
                     ipBruteForceEvent = new BruteForceDetectedEvent
                     {
@@ -99,7 +99,7 @@ public class SecurityMonitoringService : ISecurityMonitoringService
                     };
                 }
             }
-            
+
             // Log outside the lock
             if (ipBruteForceEvent != null)
             {
@@ -119,7 +119,7 @@ public class SecurityMonitoringService : ISecurityMonitoringService
                 if (emailAttempts.Count >= MaxFailedAttemptsPerEmail)
                 {
                     _lockedAccounts[email.ToLower()] = now.AddMinutes(LockoutDurationMinutes);
-                    
+
                     // Prepare event data inside lock
                     accountLockedEvent = new AccountLockedEvent
                     {
@@ -131,7 +131,7 @@ public class SecurityMonitoringService : ISecurityMonitoringService
                     };
                 }
             }
-            
+
             // Log outside the lock
             if (accountLockedEvent != null)
             {

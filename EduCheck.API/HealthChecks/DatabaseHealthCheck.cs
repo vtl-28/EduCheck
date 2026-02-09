@@ -28,7 +28,7 @@ public class DatabaseHealthCheck : IHealthCheck
         {
             // Check if we can connect and execute a simple query
             var canConnect = await _context.Database.CanConnectAsync(cancellationToken);
-            
+
             if (!canConnect)
             {
                 _logger.LogError("Database health check failed: Cannot connect to database");

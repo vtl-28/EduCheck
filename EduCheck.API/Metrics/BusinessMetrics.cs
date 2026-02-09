@@ -110,12 +110,12 @@ public class BusinessMetrics
         {
             { "success", success.ToString().ToLower() }
         };
-        
+
         if (!success && !string.IsNullOrEmpty(failureReason))
         {
             tags.Add("failure_reason", failureReason);
         }
-        
+
         _loginAttempts.Add(1, tags);
     }
 
