@@ -3,10 +3,10 @@ name: Develop Branch CI
 on:
   push:
     branches:
-      - develop
+      - development
   pull_request:
     branches:
-      - develop
+      - development
 
 env:
   DOTNET_VERSION: '9.0.x'
