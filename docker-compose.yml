@@ -1,0 +1,72 @@
+version: "3.9"
+services:
+  educheck-api:
+    build:
+      context: .                        # Solution root — Dockerfile can see all projects
+      dockerfile: EduCheck.API/Dockerfile
+      target: build                     # Use the build stage (has SDK + dotnet watch)
+
+    # Override the production ENTRYPOINT for hot reload in dev.
+    # dotnet watch rebuilds and restarts the app when source files change.
+    command: dotnet watch run --project EduCheck.API/EduCheck.API.csproj --no-launch-profile
+
+    ports:
+      - "5169:8080"                     # localhost:5169 → container:8080 (matches your existing local port)
+
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+      # ------------------------------------------------------------------
+      # Database — Neon PostgreSQL (connection string from .env)
+      # ------------------------------------------------------------------
+      - ConnectionStrings__DefaultConnection=${NEON_CONNECTION_STRING}
+
+      # ------------------------------------------------------------------
+      # JWT settings (from .env)
+      # ------------------------------------------------------------------
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - JwtSettings__AccessTokenExpirationMinutes=${JWT_ACCESS_TOKEN_EXPIRY_MINUTES:-60}
+      - JwtSettings__RefreshTokenExpirationDays=${JWT_REFRESH_TOKEN_EXPIRY_DAYS:-7}
+
+      # ------------------------------------------------------------------
+      # Grafana Cloud / OpenTelemetry (from .env)
+      # ------------------------------------------------------------------
+      - OTEL_SERVICE_NAME=educheck
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${GRAFANA_OTLP_ENDPOINT}
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_EXPORTER_OTLP_HEADERS=${GRAFANA_OTLP_HEADERS}
+      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=educheck-platform,deployment.environment=development
+      # ------------------------------------------------------------------
+      # dotnet watch settings
+      # ------------------------------------------------------------------
+      - DOTNET_USE_POLLING_FILE_WATCHER=true   # Required inside containers on Windows/Mac hosts
+
+    volumes:
+      # Mount the full solution source so dotnet watch can detect changes.
+      # :cached improves performance on Mac/Windows Docker Desktop.
+      - .:/src:cached
+
+      # Prevent the host's obj/bin from overwriting the container's.
+      # These anonymous volumes "shadow" the host directories, keeping
+      # build artifacts isolated inside the container.
+      - /src/EduCheck.API/obj
+      - /src/EduCheck.API/bin
+      - /src/EduCheck.Domain/obj
+      - /src/EduCheck.Domain/bin
+      - /src/EduCheck.Application/obj
+      - /src/EduCheck.Application/bin
+      - /src/EduCheck.Infrastructure/obj
+      - /src/EduCheck.Infrastructure/bin
+
+    working_dir: /src
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s               # Give dotnet watch time to do its first build

@@ -22,8 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ============================================
 builder.Logging.AddTelemetryLogging(builder.Configuration);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -151,12 +150,6 @@ using (var scope = app.Services.CreateScope())
 {
     var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
     await seeder.SeedAsync();
-
-    //  var tracerProvider = scope.ServiceProvider.GetService<OpenTelemetry.Trace.TracerProvider>();
-    // Console.WriteLine($"[DIAGNOSTIC] TracerProvider exists: {tracerProvider != null}");
-
-    // var meterProvider = scope.ServiceProvider.GetService<OpenTelemetry.Metrics.MeterProvider>();
-    // Console.WriteLine($"[DIAGNOSTIC] MeterProvider exists: {meterProvider != null}");
 }
 
 if (app.Environment.IsDevelopment())
@@ -172,7 +165,13 @@ if (app.Environment.IsDevelopment())
 //app.UseHttpsRedirection();
 
 app.UseAuthentication();
-app.UseRateLimiter();
+
+// Only use rate limiter middleware if it was registered
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseRateLimiter();
+}
+
 app.UseAuthorization();
 // ============================================
 // Security Monitoring Middleware
@@ -223,3 +222,5 @@ startupHealthCheck.SetReady();
 app.MapControllers();
 
 app.Run();
+// Make Program class accessible to integration tests
+public partial class Program { }
