@@ -252,48 +252,48 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-/// Update current user's profile
-/// </summary>
-[HttpPut("profile")]
-[Authorize]
-[ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-[ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
-[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
-{
-    if (!ModelState.IsValid)
+    /// Update current user's profile
+    /// </summary>
+    [HttpPut("profile")]
+    [Authorize]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        return BadRequest(new AuthResponse
+        if (!ModelState.IsValid)
         {
-            Success = false,
-            Message = "Validation failed",
-            Errors = ModelState.Values
-                .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage)
-                .ToList()
-        });
-    }
+            return BadRequest(new AuthResponse
+            {
+                Success = false,
+                Message = "Validation failed",
+                Errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList()
+            });
+        }
 
-    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-    if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
-    {
-        return Unauthorized(new AuthResponse
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
         {
-            Success = false,
-            Message = "Invalid user"
-        });
+            return Unauthorized(new AuthResponse
+            {
+                Success = false,
+                Message = "Invalid user"
+            });
+        }
+
+        var result = await _authService.UpdateProfileAsync(userGuid, request);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
     }
-
-    var result = await _authService.UpdateProfileAsync(userGuid, request);
-
-    if (!result.Success)
-    {
-        return BadRequest(result);
-    }
-
-    return Ok(result);
-}
 
     /// <summary>
     /// Get Google OAuth authorization URL
@@ -310,40 +310,40 @@ public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest r
 
 
     [HttpGet("google-callback")]
-public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string? error)
-{
-    var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
-
-    if (!string.IsNullOrEmpty(error))
+    public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string? error)
     {
-        return Redirect($"{frontendUrl}/auth/login?error=google_failed");
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            return Redirect($"{frontendUrl}/auth/login?error=google_failed");
+        }
+
+        if (string.IsNullOrEmpty(code))
+        {
+            return Redirect($"{frontendUrl}/auth/login?error=no_code");
+        }
+
+        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
+        var result = await _googleAuthService.AuthenticateAsync(code, redirectUri);
+
+        if (!result.Success)
+        {
+            return Redirect($"{frontendUrl}/auth/login?error=google_failed");
+        }
+
+        // Redirect back to Angular with tokens in query params
+        return Redirect(
+            $"{frontendUrl}/auth/google-callback" +
+            $"?accessToken={Uri.EscapeDataString(result.AccessToken!)}" +
+            $"&refreshToken={Uri.EscapeDataString(result.RefreshToken!)}" +
+            $"&userId={Uri.EscapeDataString(result.User?.Id.ToString() ?? "")}" +
+            $"&email={Uri.EscapeDataString(result.User?.Email ?? "")}" +
+            $"&firstName={Uri.EscapeDataString(result.User?.FirstName ?? "")}" +
+            $"&lastName={Uri.EscapeDataString(result.User?.LastName ?? "")}" +
+            $"&role={Uri.EscapeDataString(result.User?.Role.ToString() ?? "Student")}"
+        );
     }
-
-    if (string.IsNullOrEmpty(code))
-    {
-        return Redirect($"{frontendUrl}/auth/login?error=no_code");
-    }
-
-    var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
-    var result = await _googleAuthService.AuthenticateAsync(code, redirectUri);
-
-    if (!result.Success)
-    {
-        return Redirect($"{frontendUrl}/auth/login?error=google_failed");
-    }
-
-    // Redirect back to Angular with tokens in query params
-    return Redirect(
-        $"{frontendUrl}/auth/google-callback" +
-        $"?accessToken={Uri.EscapeDataString(result.AccessToken!)}" +
-        $"&refreshToken={Uri.EscapeDataString(result.RefreshToken!)}" +
-        $"&userId={Uri.EscapeDataString(result.User?.Id.ToString() ?? "")}" +
-        $"&email={Uri.EscapeDataString(result.User?.Email ?? "")}" +
-        $"&firstName={Uri.EscapeDataString(result.User?.FirstName ?? "")}" +
-        $"&lastName={Uri.EscapeDataString(result.User?.LastName ?? "")}" +
-        $"&role={Uri.EscapeDataString(result.User?.Role.ToString() ?? "Student")}"
-    );
-}
 
     /// <summary>
     /// Google OAuth - authenticate with code (for mobile/SPA apps)

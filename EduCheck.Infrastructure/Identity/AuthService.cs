@@ -446,69 +446,69 @@ public class AuthService : IAuthService
     }
 
     public async Task<AuthResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
-{
-    _logger.LogInformation("Updating profile for user: {UserId}", userId);
-
-    var user = await _userManager.FindByIdAsync(userId.ToString());
-
-    if (user == null || !user.IsActive)
     {
-        return new AuthResponse
+        _logger.LogInformation("Updating profile for user: {UserId}", userId);
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+
+        if (user == null || !user.IsActive)
         {
-            Success = false,
-            Message = "User not found",
-            Errors = new List<string> { "User not found or account deactivated" }
-        };
-    }
-
-    // Update base user fields
-    user.FirstName   = request.FirstName.Trim();
-    user.LastName    = request.LastName.Trim();
-    user.PhoneNumber = request.PhoneNumber?.Trim() ?? null;
-    user.UpdatedAt   = DateTime.UtcNow;
-
-    var result = await _userManager.UpdateAsync(user);
-
-    if (!result.Succeeded)
-    {
-        return new AuthResponse
-        {
-            Success = false,
-            Message = "Profile update failed",
-            Errors = result.Errors.Select(e => e.Description).ToList()
-        };
-    }
-
-    // Update student-specific fields if applicable
-    Student? student = null;
-    Admin?   admin   = null;
-
-    if (user.Role == UserRole.Student)
-    {
-        student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == user.Id);
-        if (student != null)
-        {
-            student.Province  = request.Province?.Trim();
-            student.City      = request.City?.Trim();
-            student.UpdatedAt = DateTime.UtcNow;
-            _context.Students.Update(student);
-            await _context.SaveChangesAsync();
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "User not found",
+                Errors = new List<string> { "User not found or account deactivated" }
+            };
         }
-    }
-    else if (user.Role == UserRole.Admin)
-    {
-        admin = await _context.Admins.FirstOrDefaultAsync(a => a.UserId == user.Id);
-    }
 
-    _logger.LogInformation("Profile updated successfully for user: {UserId}", userId);
+        // Update base user fields
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.PhoneNumber = request.PhoneNumber?.Trim() ?? null;
+        user.UpdatedAt = DateTime.UtcNow;
 
-    return new AuthResponse
-    {
-        Success = true,
-        Message = "Profile updated successfully",
-        User = MapToUserDto(user, student, admin)
-    };
-}
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Profile update failed",
+                Errors = result.Errors.Select(e => e.Description).ToList()
+            };
+        }
+
+        // Update student-specific fields if applicable
+        Student? student = null;
+        Admin? admin = null;
+
+        if (user.Role == UserRole.Student)
+        {
+            student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == user.Id);
+            if (student != null)
+            {
+                student.Province = request.Province?.Trim();
+                student.City = request.City?.Trim();
+                student.UpdatedAt = DateTime.UtcNow;
+                _context.Students.Update(student);
+                await _context.SaveChangesAsync();
+            }
+        }
+        else if (user.Role == UserRole.Admin)
+        {
+            admin = await _context.Admins.FirstOrDefaultAsync(a => a.UserId == user.Id);
+        }
+
+        _logger.LogInformation("Profile updated successfully for user: {UserId}", userId);
+
+        return new AuthResponse
+        {
+            Success = true,
+            Message = "Profile updated successfully",
+            User = MapToUserDto(user, student, admin)
+        };
+    }
 
     #region Private Helper Methods
 
