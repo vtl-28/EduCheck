@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
 
 namespace EduCheck.Tests.Controllers;
 
@@ -17,6 +18,7 @@ public class AuthControllerTests
     private readonly Mock<IGoogleAuthService> _googleAuthServiceMock;
     //private readonly Mock<IFacebookAuthService> _facebookAuthServiceMock;
     private readonly Mock<ILogger<AuthController>> _loggerMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
@@ -26,12 +28,16 @@ public class AuthControllerTests
         //_facebookAuthServiceMock = new Mock<IFacebookAuthService>();
         _loggerMock = new Mock<ILogger<AuthController>>();
 
+        _configurationMock = new Mock<IConfiguration>();
+        _configurationMock.Setup(x => x["FrontendUrl"])
+                    .Returns("http://localhost:4200");
+
         _controller = new AuthController(
             _authServiceMock.Object,
             _loggerMock.Object,
-            _googleAuthServiceMock.Object
-            //_facebookAuthServiceMock.Object,
-            );
+            _googleAuthServiceMock.Object,
+            _configurationMock.Object
+        );
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Scheme = "https";
