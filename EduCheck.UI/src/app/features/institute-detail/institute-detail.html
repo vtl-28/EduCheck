@@ -1,0 +1,114 @@
+<div class="detail-page">
+
+  <div class="app-bar">
+    <button class="app-bar__back" (click)="goBack()">←</button>
+    <h2 class="app-bar__title">Institution Details</h2>
+    <div class="app-bar__spacer"></div>
+  </div>
+
+  @if (loading()) {
+    <div class="detail-hero detail-hero--skeleton">
+      <div class="skeleton skeleton--heading"></div>
+      <div class="skeleton skeleton--badge"></div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-card">
+        @for (i of [1,2,3]; track i) {
+          <div class="skeleton-row">
+            <div class="skeleton skeleton--label"></div>
+            <div class="skeleton skeleton--value"></div>
+          </div>
+        }
+      </div>
+    </div>
+
+  } @else if (institute()) {
+    <div class="detail-hero">
+      <div class="detail-hero__inner">
+        <h2 class="detail-hero__name">{{ institute()!.institutionName }}</h2>
+        <div class="status-banner" [class]="statusBannerClass">{{ statusLabel }}</div>
+      </div>
+    </div>
+
+    @if (showWarning) {
+      <div class="warning-banner">
+        ⚠️ <strong>Warning:</strong> This institution is not fully accredited by the
+        Department of Higher Education and Training. Qualifications obtained
+        here may not be recognised.
+      </div>
+    }
+
+    <div class="detail-body">
+      <div class="page-container">
+        <div class="detail-grid">
+
+          <div class="detail-card">
+            <h3 class="detail-card__title">Accreditation Info</h3>
+            <div class="detail-row">
+              <span class="detail-row__label">Accr. Number</span>
+              <span class="detail-row__value">{{ institute()!.accreditationNumber || '—' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Period</span>
+              <span class="detail-row__value">{{ institute()!.accreditationPeriod || '—' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Provider Type</span>
+              <span class="detail-row__value">{{ institute()!.providerType || '—' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Province</span>
+              <span class="detail-row__value">{{ institute()!.province ?? '—' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">City</span>
+              <span class="detail-row__value">{{ institute()!.city ?? '—' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h3 class="detail-card__title">Contact &amp; Location</h3>
+            @if (institute()!.physicalAddress) {
+              <div class="detail-row">
+                <span class="detail-row__label">Physical</span>
+                <span class="detail-row__value">{{ institute()!.physicalAddress }}</span>
+              </div>
+            }
+            @if (institute()!.postalAddress) {
+              <div class="detail-row">
+                <span class="detail-row__label">Postal</span>
+                <span class="detail-row__value">{{ institute()!.postalAddress }}</span>
+              </div>
+            }
+            @if (institute()!.telephone) {
+              <div class="detail-row">
+                <span class="detail-row__label">Telephone</span>
+                <span class="detail-row__value">{{ institute()!.telephone }}</span>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- CTA buttons — Report only shown for non-accredited -->
+        <div class="cta-row">
+          <button
+            class="cta-btn cta-btn--primary"
+            [class.cta-btn--saved]="isFavorite()"
+            [disabled]="togglingFavorite()"
+            (click)="toggleFavorite()"
+          >
+            {{ favoriteLabel }}
+          </button>
+          @if (!institute()!.isAccredited) {
+            <button class="cta-btn cta-btn--danger" (click)="reportInstitute()">
+              🚩 Report
+            </button>
+          }
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

@@ -12,13 +12,14 @@ env:
   DOTNET_VERSION: '9.0.x'
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
+  NODE_VERSION: '22'
 
 jobs:
   # ===========================================================================
-  # Job 1: Lint & Format Check
+  # Job 1: Backend Lint & Format Check
   # ===========================================================================
   lint:
-    name: 🔍 Lint & Format
+    name: 🔍 Backend Lint & Format
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -38,10 +39,37 @@ jobs:
         run: dotnet format EduCheck.sln --verify-no-changes --verbosity diagnostic
 
   # ===========================================================================
-  # Job 2: Build
+  # Job 2: Frontend Lint
+  # ===========================================================================
+  frontend-lint:
+    name: 🔍 Frontend Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+        working-directory: EduCheck.UI
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+        working-directory: EduCheck.UI
+
+  # ===========================================================================
+  # Job 3: Backend Build
   # ===========================================================================
   build:
-    name: 🏗️ Build
+    name: 🏗️ Backend Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: lint
@@ -71,7 +99,35 @@ jobs:
           retention-days: 1
 
   # ===========================================================================
-  # Job 3: Unit Tests
+  # Job 4: Frontend Build
+  # ===========================================================================
+  frontend-build:
+    name: 🏗️ Frontend Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: frontend-lint
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+        working-directory: EduCheck.UI
+
+      - name: 🏗️ Build Angular app (production)
+        run: npm run build -- --configuration production
+        working-directory: EduCheck.UI
+
+  # ===========================================================================
+  # Job 5: Unit Tests
   # ===========================================================================
   unit-tests:
     name: 🧪 Unit Tests
@@ -126,7 +182,7 @@ jobs:
         continue-on-error: true
 
   # ===========================================================================
-  # Job 4: SAST - Static Application Security Testing
+  # Job 6: SAST - Static Application Security Testing
   # ===========================================================================
   sast:
     name: 🛡️ SAST Security Scan
@@ -162,7 +218,7 @@ jobs:
         continue-on-error: true
 
   # ===========================================================================
-  # Job 5: Secret Scanning
+  # Job 7: Secret Scanning
   # ===========================================================================
   secret-scan:
     name: 🔐 Secret Scanning
@@ -185,7 +241,7 @@ jobs:
           extra_args: --only-verified
 
   # ===========================================================================
-  # Job 6: Dependency Vulnerability Check
+  # Job 8: Dependency Vulnerability Check
   # ===========================================================================
   dependency-check:
     name: 📦 Dependency Vulnerabilities
@@ -205,31 +261,51 @@ jobs:
       - name: 📦 Restore dependencies
         run: dotnet restore EduCheck.sln
 
-      - name: 🔍 Check for vulnerable packages
+      - name: 🔍 Check for vulnerable .NET packages
         run: |
           dotnet list package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
-
           if grep -q "Critical\|High" vulnerability-report.txt; then
             echo "❌ Critical or High vulnerabilities found!"
             cat vulnerability-report.txt
             exit 1
           fi
+          echo "✅ No critical .NET vulnerabilities found"
 
-          echo "✅ No critical vulnerabilities found"
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
 
-      - name: 📤 Upload vulnerability report
+      - name: 📦 Install frontend dependencies
+        run: npm ci
+        working-directory: EduCheck.UI
+
+      - name: 🔍 Check for vulnerable npm packages
+        run: |
+          npm audit --audit-level=high 2>&1 | tee npm-vulnerability-report.txt || true
+          if grep -q "critical\|high" npm-vulnerability-report.txt; then
+            echo "❌ Critical or High npm vulnerabilities found!"
+            cat npm-vulnerability-report.txt
+            exit 1
+          fi
+          echo "✅ No critical npm vulnerabilities found"
+        working-directory: EduCheck.UI
+
+      - name: 📤 Upload vulnerability reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: vulnerability-report
-          path: vulnerability-report.txt
+          name: vulnerability-reports
+          path: |
+            vulnerability-report.txt
+            EduCheck.UI/npm-vulnerability-report.txt
           retention-days: 7
 
   # ===========================================================================
-  # Job 7: Integration Tests
+  # Job 9: Integration Tests
   # Testcontainers spins up a real PostgreSQL container inside the runner.
-  # No external DB or docker-compose.test.yml needed — Docker is available
-  # on ubuntu-latest GitHub Actions runners out of the box.
   # ===========================================================================
   integration-tests:
     name: 🔗 Integration Tests
@@ -267,8 +343,6 @@ jobs:
             --logger "trx;LogFileName=integration-test-results.trx" \
             --results-directory ./TestResults/Integration
         env:
-          # Testcontainers uses the Docker socket — no extra config needed.
-          # These env vars are picked up by EduCheckWebApplicationFactory.
           DOTNET_ENVIRONMENT: Testing
           JWT_SECRET_KEY_TEST: ${{ secrets.JWT_SECRET_KEY_TEST }}
 
@@ -288,19 +362,18 @@ jobs:
           path: ./TestResults/Integration/*.trx
           reporter: dotnet-trx
           fail-on-error: true
-        continue-on-error: true  # Informational only — don't block on reporter failures
+        continue-on-error: true
 
   # ===========================================================================
-  # Job 8: Container Scanning
-  # Builds the API Docker image and scans it with Trivy.
-  # Image is NOT pushed here — build and scan only.
-  # Pushing happens in the main/release pipeline only.
+  # Job 10: Container Scanning — API + UI
+  # Builds both Docker images and scans with Trivy.
+  # Images are NOT pushed here — scan only.
   # ===========================================================================
   container-scan:
     name: 🐳 Container Scanning
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: build
+    timeout-minutes: 20
+    needs: [build, frontend-build]
     permissions:
       security-events: write
       contents: read
@@ -309,14 +382,15 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🐳 Build API Docker image (scan only — not pushed)
+      # ── API image ──────────────────────────────────────────
+      - name: 🐳 Build API Docker image
         run: |
           docker build \
             --file EduCheck.API/Dockerfile \
             --tag educheck-api:${{ github.sha }} \
             .
 
-      - name: 🔍 Run Trivy vulnerability scan (fail on Critical/High)
+      - name: 🔍 Trivy scan — API (fail on Critical/High)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: educheck-api:${{ github.sha }}
@@ -326,36 +400,82 @@ jobs:
           vuln-type: os,library
           severity: CRITICAL,HIGH
 
-      - name: 📋 Run Trivy scan (SARIF for GitHub Security tab)
+      - name: 📋 Trivy SARIF — API
         uses: aquasecurity/trivy-action@master
         if: always()
         with:
           image-ref: educheck-api:${{ github.sha }}
           format: sarif
-          output: trivy-results.sarif
+          output: trivy-api-results.sarif
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH,MEDIUM
 
-      - name: 📤 Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: trivy-results.sarif
-        continue-on-error: true
-
-      - name: 📦 Generate SBOM with Syft
+      - name: 📦 SBOM — API
         uses: anchore/sbom-action@v0
         with:
           image: educheck-api:${{ github.sha }}
-          artifact-name: sbom-develop-${{ github.sha }}.spdx.json
-          output-file: sbom.spdx.json
+          artifact-name: sbom-api-${{ github.sha }}.spdx.json
+          output-file: sbom-api.spdx.json
 
-      - name: 📤 Upload SBOM artifact
+      # ── UI image ───────────────────────────────────────────
+      - name: 🐳 Build UI Docker image
+        run: |
+          docker build \
+            --file EduCheck.UI/Dockerfile \
+            --tag educheck-ui:${{ github.sha }} \
+            EduCheck.UI/
+
+      - name: 🔍 Trivy scan — UI (fail on Critical/High)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: educheck-ui:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: 📋 Trivy SARIF — UI
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          image-ref: educheck-ui:${{ github.sha }}
+          format: sarif
+          output: trivy-ui-results.sarif
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH,MEDIUM
+
+      - name: 📦 SBOM — UI
+        uses: anchore/sbom-action@v0
+        with:
+          image: educheck-ui:${{ github.sha }}
+          artifact-name: sbom-ui-${{ github.sha }}.spdx.json
+          output-file: sbom-ui.spdx.json
+
+      # ── Upload all SARIF + SBOMs ───────────────────────────
+      - name: 📤 Upload SARIF results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: trivy-api-results.sarif
+        continue-on-error: true
+
+      - name: 📤 Upload UI SARIF results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: trivy-ui-results.sarif
+        continue-on-error: true
+
+      - name: 📤 Upload SBOMs
         uses: actions/upload-artifact@v4
         with:
           name: sbom-develop
-          path: sbom.spdx.json
+          path: |
+            sbom-api.spdx.json
+            sbom-ui.spdx.json
           retention-days: 30
 
   # ===========================================================================
@@ -366,7 +486,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint
+      - frontend-lint
       - build
+      - frontend-build
       - unit-tests
       - sast
       - secret-scan
@@ -380,16 +502,18 @@ jobs:
         run: |
           echo "🎉 Develop branch CI checks passed!"
           echo ""
-          echo "✅ Lint & Format         - Passed"
-          echo "✅ Build                 - Passed"
-          echo "✅ Unit Tests            - Passed"
-          echo "✅ SAST Security Scan    - Passed"
-          echo "✅ Secret Scanning       - Passed"
-          echo "✅ Dependency Check      - Passed"
-          echo "✅ Integration Tests     - Passed (72 tests)"
-          echo "✅ Container Scan        - Passed"
+          echo "✅ Backend Lint & Format   - Passed"
+          echo "✅ Frontend Lint           - Passed"
+          echo "✅ Backend Build           - Passed"
+          echo "✅ Frontend Build          - Passed"
+          echo "✅ Unit Tests              - Passed"
+          echo "✅ SAST Security Scan      - Passed"
+          echo "✅ Secret Scanning         - Passed"
+          echo "✅ Dependency Check        - Passed"
+          echo "✅ Integration Tests       - Passed"
+          echo "✅ Container Scan (API+UI) - Passed"
           echo ""
           echo "📊 Code coverage uploaded to Codecov"
           echo "🔒 Security scans completed"
-          echo "🐳 Docker image scanned — no Critical/High vulnerabilities"
-          echo "📦 SBOM generated"
+          echo "🐳 Both Docker images scanned — no Critical/High vulnerabilities"
+          echo "📦 SBOMs generated for API and UI"

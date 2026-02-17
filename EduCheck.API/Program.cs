@@ -22,7 +22,8 @@ var builder = WebApplication.CreateBuilder(args);
 // ============================================
 builder.Logging.AddTelemetryLogging(builder.Configuration);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+?? throw new InvalidOperationException("Connection string not found");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -38,6 +39,38 @@ builder.Services.AddControllers();
 builder.Services.AddTelemetry(builder.Configuration);
 
 builder.Services.AddSingleton<BusinessMetrics>();
+
+// ============================================
+// CORS Configuration
+// ============================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("EduCheckCors", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy
+                .WithOrigins(
+                    "http://localhost:4200",
+                    "http://localhost:4201"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+        else
+        {
+            policy
+                .WithOrigins(
+                    "https://educheck.co.za",
+                    "https://www.educheck.co.za"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+    });
+});
 
 // ============================================
 // Health Checks Configuration
@@ -163,7 +196,9 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
+app.UseGlobalExceptionHandler();
 
+app.UseCors("EduCheckCors");
 app.UseAuthentication();
 
 // Only use rate limiter middleware if it was registered

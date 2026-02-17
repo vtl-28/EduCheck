@@ -1,0 +1,256 @@
+.admin-page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+// App bar
+.app-bar {
+  height: 60px;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  position: sticky; top: 0; z-index: 10;
+
+  &__logo {
+    font-size: 20px; font-weight: 800; color: var(--white);
+    span { color: var(--blue-light); }
+  }
+
+  &__tag {
+    background: var(--blue); color: var(--white);
+    font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  &__spacer { flex: 1; }
+
+  &__logout {
+    background: rgba(255,255,255,0.1); color: var(--white);
+    border: none; border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition);
+    &:hover { background: rgba(255,255,255,0.2); }
+  }
+}
+
+.admin-body {
+  flex: 1;
+  padding: 28px 16px;
+  @media (min-width: 1024px) { padding: 36px 24px; }
+}
+
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-title {
+  font-size: 22px; font-weight: 700;
+  color: var(--navy); margin-bottom: 20px;
+  @media (min-width: 1024px) { font-size: 26px; }
+}
+
+// Stats grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+  @media (min-width: 600px)  { grid-template-columns: repeat(4, 1fr); }
+  @media (min-width: 1024px) { grid-template-columns: repeat(8, 1fr); }
+}
+
+.stat-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  border-top: 3px solid var(--grey-200);
+
+  &__label {
+    font-size: 11px; font-weight: 600;
+    color: var(--grey-500); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+
+  &__value {
+    font-size: 28px; font-weight: 800;
+    color: var(--navy); line-height: 1;
+  }
+
+  &--amber { border-top-color: #e67e22; .stat-card__value { color: #e67e22; } }
+  &--blue  { border-top-color: var(--blue); .stat-card__value { color: var(--blue); } }
+  &--green { border-top-color: var(--green); .stat-card__value { color: var(--green); } }
+  &--grey  { border-top-color: var(--grey-400); }
+  &--navy  { border-top-color: var(--navy); }
+}
+
+// Filter chips
+.filter-chips {
+  display: flex; gap: 8px;
+  flex-wrap: wrap; margin-bottom: 20px;
+}
+
+.filter-chip {
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--white);
+  border: 1.5px solid var(--grey-200);
+  font-size: 13px; font-weight: 500;
+  color: var(--grey-600); cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+
+  &:hover { border-color: var(--blue); color: var(--blue); }
+
+  &--active {
+    background: var(--navy); border-color: var(--navy);
+    color: var(--white);
+  }
+}
+
+// Reports count
+.reports-count {
+  font-size: 13px; color: var(--grey-500);
+  margin-bottom: 12px;
+}
+
+// Reports list
+.reports-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.report-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  border: 1.5px solid var(--grey-100);
+  transition: box-shadow var(--transition);
+
+  &:hover { box-shadow: var(--shadow-md); }
+
+  &--expanded { border-color: var(--blue); }
+
+  &__header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px 20px; cursor: pointer;
+    gap: 12px;
+  }
+
+  &__info { flex: 1; min-width: 0; }
+
+  &__top {
+    display: flex; align-items: center;
+    flex-wrap: wrap; gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  &__name {
+    font-size: 15px; font-weight: 700;
+    color: var(--navy); flex: 1;
+    min-width: 0;
+  }
+
+  &__meta {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 12px; color: var(--grey-500);
+  }
+
+  &__chevron {
+    font-size: 12px; color: var(--grey-400);
+    flex-shrink: 0; margin-top: 2px;
+  }
+
+  &__body {
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--grey-100);
+    display: flex; flex-direction: column; gap: 16px;
+    padding-top: 16px;
+  }
+}
+
+// Report detail sections
+.report-detail {
+  &__label {
+    font-size: 11px; font-weight: 700;
+    color: var(--grey-500); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+
+  &__text {
+    font-size: 14px; color: var(--grey-700);
+    line-height: 1.6;
+  }
+
+  &--dates {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    font-size: 12px; color: var(--grey-500);
+  }
+}
+
+.reporter-info {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  font-size: 13px; color: var(--grey-700);
+}
+
+// Badges
+.badge {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 12px;
+  white-space: nowrap;
+
+  &--amber  { background: #fef3cd; color: #856404; }
+  &--blue   { background: #cfe2ff; color: #084298; }
+  &--green  { background: #d1e7dd; color: #0a3622; }
+  &--grey   { background: var(--grey-100); color: var(--grey-600); }
+  &--purple { background: #e2d9f3; color: #432874; }
+}
+
+// Severity badge
+.severity-badge {
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+
+  &.severity--low      { background: #d1e7dd; color: #0a3622; }
+  &.severity--medium   { background: #fff3cd; color: #664d03; }
+  &.severity--high     { background: #ffe0b2; color: #7f3400; }
+  &.severity--critical { background: #f8d7da; color: #58151c; }
+}
+
+// Empty state
+.empty-state {
+  text-align: center; padding: 60px 20px;
+
+  &__icon { font-size: 48px; margin-bottom: 16px; }
+  &__title { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  &__text  { font-size: 14px; color: var(--grey-500); }
+}
+
+// Skeleton
+.skeleton {
+  background: linear-gradient(90deg, var(--grey-100) 25%, var(--grey-200) 50%, var(--grey-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+
+  &--label { height: 12px; width: 60%; margin-bottom: 8px; }
+  &--value { height: 28px; width: 40%; }
+  &--title { height: 18px; width: 50%; margin-bottom: 8px; }
+  &--meta  { height: 12px; width: 80%; margin-bottom: 6px; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

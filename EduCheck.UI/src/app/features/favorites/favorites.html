@@ -1,0 +1,77 @@
+<div class="favorites-page">
+
+  @if (drawerOpen()) {
+    <div class="drawer-overlay" (click)="drawerOpen.set(false)"></div>
+  }
+  <div class="drawer-container" [class.drawer-container--open]="drawerOpen()">
+    <app-drawer
+      (closed)="drawerOpen.set(false)"
+      (instituteSelected)="openFromDrawer($event)"
+    />
+  </div>
+
+  <div class="app-bar">
+    <button class="app-bar__menu-btn" (click)="drawerOpen.set(true)">
+      <span class="hamburger-icon"><span></span><span></span><span></span></span>
+    </button>
+    <h2 class="app-bar__title font-display">My Favorites</h2>
+    <div class="app-bar__spacer"></div>
+  </div>
+
+  <div class="favorites-body">
+    <div class="page-container">
+
+      @if (loading()) {
+        <div class="results-grid">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="skeleton-card">
+              <div class="skeleton skeleton--title"></div>
+              <div class="skeleton skeleton--badge"></div>
+              <div class="skeleton skeleton--meta"></div>
+            </div>
+          }
+        </div>
+
+      } @else if (favorites().length === 0) {
+        <div class="empty-state">
+          <div class="empty-state__icon">❤️</div>
+          <h3 class="empty-state__title">No favorites yet</h3>
+          <p class="empty-state__text">
+            Save institutions you want to keep track of and they'll appear here
+          </p>
+          <button class="btn-search" (click)="goToSearch()">🔍 Start Searching</button>
+        </div>
+
+      } @else {
+        <p class="favorites-count">
+          {{ favorites().length }} saved institution{{ favorites().length !== 1 ? 's' : '' }}
+        </p>
+        <div class="results-grid">
+          @for (entry of favorites(); track entry.id) {
+            <div class="institute-card" (click)="openInstitute(entry)">
+              <div class="institute-card__top">
+                <h3 class="institute-card__name">{{ entry.institute.institutionName }}</h3>
+                <span class="badge" [class]="badgeClass(entry)">{{ badgeLabel(entry) }}</span>
+              </div>
+              <div class="institute-card__meta">
+                <span>📍 {{ entry.institute.province ?? 'N/A' }}</span>
+              </div>
+              <div class="institute-card__actions">
+                <button
+                  class="remove-btn"
+                  [disabled]="removingId() === entry.id"
+                  (click)="removeFavorite(entry, $event)"
+                >
+                  {{ removingId() === entry.id ? 'Removing...' : '🗑 Remove' }}
+                </button>
+                <button class="view-btn" (click)="openInstitute(entry)">View Details →</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  </div>
+
+</div>

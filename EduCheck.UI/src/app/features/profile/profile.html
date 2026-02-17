@@ -1,0 +1,115 @@
+<div class="profile-page">
+
+  @if (drawerOpen()) {
+    <div class="drawer-overlay" (click)="drawerOpen.set(false)"></div>
+  }
+  <div class="drawer-container" [class.drawer-container--open]="drawerOpen()">
+    <app-drawer
+      (closed)="drawerOpen.set(false)"
+      (instituteSelected)="openFromDrawer($event)"
+    />
+  </div>
+
+  <div class="app-bar">
+    <button class="app-bar__menu-btn" (click)="drawerOpen.set(true)">
+      <span class="hamburger-icon"><span></span><span></span><span></span></span>
+    </button>
+    <h2 class="app-bar__title font-display">My Profile</h2>
+    <div class="app-bar__spacer"></div>
+  </div>
+
+  <div class="profile-body">
+    <div class="page-container">
+      <div class="profile-layout">
+
+        <!-- Avatar card -->
+        <div class="avatar-card">
+          <div class="avatar-card__circle">{{ userInitials() }}</div>
+          <h3 class="avatar-card__name">{{ displayName() }}</h3>
+          <p class="avatar-card__email">{{ currentUser()?.email }}</p>
+          <span class="role-badge">{{ currentUser()?.role }}</span>
+          <button class="logout-btn" (click)="logout()">🚪 Logout</button>
+        </div>
+
+        <!-- Forms column -->
+        <div class="forms-col">
+
+          <div class="form-card">
+            <h3 class="form-card__title">Personal Information</h3>
+            <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" novalidate>
+
+              <div class="field-row">
+                <div class="field" [class.field--error]="profileForm.get('firstName')!.invalid && profileForm.get('firstName')!.touched">
+                  <label class="field__label">First Name *</label>
+                  <input class="field__input" type="text" formControlName="firstName" />
+                  @if (profileForm.get('firstName')!.invalid && profileForm.get('firstName')!.touched) {
+                    <span class="field__error">First name is required</span>
+                  }
+                </div>
+                <div class="field" [class.field--error]="profileForm.get('lastName')!.invalid && profileForm.get('lastName')!.touched">
+                  <label class="field__label">Last Name *</label>
+                  <input class="field__input" type="text" formControlName="lastName" />
+                  @if (profileForm.get('lastName')!.invalid && profileForm.get('lastName')!.touched) {
+                    <span class="field__error">Last name is required</span>
+                  }
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label">Email <span class="field__note">(cannot be changed)</span></label>
+                <input class="field__input field__input--readonly" type="email"
+                  [value]="currentUser()?.email ?? ''" readonly />
+              </div>
+
+              <div class="field">
+                <label class="field__label">Phone Number</label>
+                <input class="field__input" type="tel"
+                  placeholder="e.g. 011 123 4567" formControlName="phoneNumber" />
+              </div>
+
+              @if (isStudent()) {
+                <div class="field">
+                  <label class="field__label">Province</label>
+                  <select class="field__input field__input--select" formControlName="province">
+                    @for (p of provinces; track p) {
+                      <option [value]="p">{{ p || 'Select province...' }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="field__label">City</label>
+                  <input class="field__input" type="text"
+                    placeholder="e.g. Johannesburg" formControlName="city" />
+                </div>
+              }
+
+              <button
+                type="submit"
+                class="save-btn"
+                [disabled]="profileForm.invalid || saving()"
+              >
+                @if (saving()) {
+                  <span class="save-btn__spinner"></span> Saving...
+                } @else {
+                  💾 Save Changes
+                }
+              </button>
+
+            </form>
+          </div>
+
+          <!-- Password change — coming soon -->
+          <div class="form-card form-card--muted">
+            <h3 class="form-card__title">Change Password</h3>
+            <div class="coming-soon-notice">
+              🔒 Password change will be available in a future update.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

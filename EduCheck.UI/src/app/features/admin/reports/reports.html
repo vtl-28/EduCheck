@@ -1,0 +1,165 @@
+<div class="admin-page">
+
+  <!-- App Bar -->
+  <div class="app-bar">
+    <div class="app-bar__logo font-display">Edu<span>Check</span></div>
+    <span class="app-bar__tag">Admin</span>
+    <div class="app-bar__spacer"></div>
+    <button class="app-bar__logout" (click)="logout()">🚪 Logout</button>
+  </div>
+
+  <div class="admin-body">
+    <div class="page-container">
+
+      <h2 class="admin-title">Fraud Reports</h2>
+
+      <!-- Statistics -->
+      @if (loadingStats()) {
+        <div class="stats-grid">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="stat-card">
+              <div class="skeleton skeleton--label"></div>
+              <div class="skeleton skeleton--value"></div>
+            </div>
+          }
+        </div>
+      } @else if (stats()) {
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card__label">Total</div>
+            <div class="stat-card__value">{{ stats()!.totalReports }}</div>
+          </div>
+          <div class="stat-card stat-card--amber">
+            <div class="stat-card__label">Submitted</div>
+            <div class="stat-card__value">{{ stats()!.submittedCount }}</div>
+          </div>
+          <div class="stat-card stat-card--blue">
+            <div class="stat-card__label">Under Review</div>
+            <div class="stat-card__value">{{ stats()!.underReviewCount }}</div>
+          </div>
+          <div class="stat-card stat-card--green">
+            <div class="stat-card__label">Verified</div>
+            <div class="stat-card__value">{{ stats()!.verifiedCount }}</div>
+          </div>
+          <div class="stat-card stat-card--grey">
+            <div class="stat-card__label">Dismissed</div>
+            <div class="stat-card__value">{{ stats()!.dismissedCount }}</div>
+          </div>
+          <div class="stat-card stat-card--navy">
+            <div class="stat-card__label">Today</div>
+            <div class="stat-card__value">{{ stats()!.reportsToday }}</div>
+          </div>
+          <div class="stat-card stat-card--navy">
+            <div class="stat-card__label">This Week</div>
+            <div class="stat-card__value">{{ stats()!.reportsThisWeek }}</div>
+          </div>
+          <div class="stat-card stat-card--navy">
+            <div class="stat-card__label">This Month</div>
+            <div class="stat-card__value">{{ stats()!.reportsThisMonth }}</div>
+          </div>
+        </div>
+      }
+
+      <!-- Filter chips -->
+      <div class="filter-chips">
+        @for (filter of filters; track filter) {
+          <div
+            class="filter-chip"
+            [class.filter-chip--active]="activeFilter() === filter"
+            (click)="activeFilter.set(filter)"
+          >
+            {{ filterLabel(filter) }}
+          </div>
+        }
+      </div>
+
+      <!-- Reports list -->
+      @if (loading()) {
+        <div class="reports-list">
+          @for (i of [1,2,3]; track i) {
+            <div class="report-card">
+              <div class="skeleton skeleton--title"></div>
+              <div class="skeleton skeleton--meta"></div>
+              <div class="skeleton skeleton--meta"></div>
+            </div>
+          }
+        </div>
+
+      } @else if (filteredReports().length === 0) {
+        <div class="empty-state">
+          <div class="empty-state__icon">📋</div>
+          <h3 class="empty-state__title">No reports found</h3>
+          <p class="empty-state__text">
+            @if (activeFilter() === 'All') {
+              No fraud reports have been submitted yet.
+            } @else {
+              No reports with status "{{ activeFilter() }}".
+            }
+          </p>
+        </div>
+
+      } @else {
+        <p class="reports-count">
+          {{ filteredReports().length }} report{{ filteredReports().length !== 1 ? 's' : '' }}
+        </p>
+        <div class="reports-list">
+          @for (report of filteredReports(); track report.id) {
+            <div
+              class="report-card"
+              [class.report-card--expanded]="expandedId() === report.id"
+            >
+              <!-- Header row -->
+              <div class="report-card__header" (click)="toggleExpanded(report.id)">
+                <div class="report-card__info">
+                  <div class="report-card__top">
+                    <h3 class="report-card__name">{{ report.reportedInstituteName }}</h3>
+                    <span class="badge" [class]="statusBadgeClass(report.status)">
+                      {{ statusLabel(report.status) }}
+                    </span>
+                    <span class="severity-badge" [class]="severityClass(report.severity)">
+                      {{ report.severity }}
+                    </span>
+                  </div>
+                  <div class="report-card__meta">
+                    <span>📍 {{ report.reportedInstituteAddress }}</span>
+                    @if (report.reportedInstitutePhone) {
+                      <span>📞 {{ report.reportedInstitutePhone }}</span>
+                    }
+                    <span>📅 {{ formatDate(report.createdAt) }}</span>
+                  </div>
+                </div>
+                <span class="report-card__chevron">
+                  {{ expandedId() === report.id ? '▲' : '▼' }}
+                </span>
+              </div>
+
+              <!-- Expanded detail -->
+              @if (expandedId() === report.id) {
+                <div class="report-card__body">
+                  <div class="report-detail">
+                    <h4 class="report-detail__label">Description</h4>
+                    <p class="report-detail__text">{{ report.description }}</p>
+                  </div>
+                  <div class="report-detail">
+                    <h4 class="report-detail__label">Reported By</h4>
+                    <div class="reporter-info">
+                      <span>👤 {{ report.reporter.fullName }}</span>
+                      <span>✉️ {{ report.reporter.email }}</span>
+                    </div>
+                  </div>
+                  <div class="report-detail report-detail--dates">
+                    <span>Created: {{ formatDate(report.createdAt) }}</span>
+                    <span>Last updated: {{ formatDate(report.updatedAt) }}</span>
+                  </div>
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  </div>
+
+</div>

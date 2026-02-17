@@ -1,0 +1,416 @@
+@use '@angular/material' as mat;
+
+// ─────────────────────────────────────────────
+// 1. LOCAL FONT DECLARATIONS
+// ─────────────────────────────────────────────
+
+// DM Sans — Italic 400
+@font-face {
+  font-family: 'DM Sans';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/assets/fonts/rP2rp2ywxg089UriCZaSExd86J3t9jz86Mvy4qCRAL19DksVat-JDV30TGc.woff2') format('woff2');
+}
+
+// DM Sans — Normal 300, 400, 500, 600, 700
+// Google serves these weights from the same variable font file
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/assets/fonts/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2') format('woff2');
+}
+
+// Playfair Display — Normal 700, 800
+// Four files = four unicode subsets; the last one covers Latin
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700 800;
+  font-display: swap;
+  src: url('/assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2') format('woff2');
+}
+
+// ─────────────────────────────────────────────
+// 2. ANGULAR MATERIAL THEME
+// Override the Azure/Blue palette with our navy/blue
+// ─────────────────────────────────────────────
+html {
+  height: 100%;
+
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: 'DM Sans',
+    density: 0,
+  ));
+}
+
+// ─────────────────────────────────────────────
+// 3. CSS CUSTOM PROPERTIES (Design Tokens)
+// Single source of truth for all colours,
+// spacing, shadows and transitions
+// ─────────────────────────────────────────────
+:root {
+  // Brand colours
+  --navy:          #0B2545;
+  --navy-mid:      #13406B;
+  --blue:          #1A6CB3;
+  --blue-light:    #2E8FE8;
+  --sky:           #E8F3FC;
+  --sky-mid:       #D0E8F7;
+
+  // Neutrals
+  --white:         #FFFFFF;
+  --grey-100:      #F5F7FA;
+  --grey-200:      #E9ECF0;
+  --grey-300:      #C8CDD6;
+  --grey-500:      #7A8499;
+  --grey-700:      #3D4456;
+
+  // Semantic colours
+  --green:         #1A8754;
+  --green-bg:      #E6F4EE;
+  --red:           #C0392B;
+  --red-bg:        #FDECEA;
+  --amber:         #B45309;
+  --amber-bg:      #FEF3C7;
+
+  // Shadows
+  --shadow-sm:     0 1px 3px rgba(11,37,69,.08), 0 1px 2px rgba(11,37,69,.04);
+  --shadow-md:     0 4px 12px rgba(11,37,69,.10), 0 2px 4px rgba(11,37,69,.06);
+  --shadow-lg:     0 12px 32px rgba(11,37,69,.14), 0 4px 8px rgba(11,37,69,.08);
+
+  // Border radius
+  --radius:        12px;
+  --radius-sm:     8px;
+  --radius-xs:     6px;
+
+  // Transitions
+  --transition:    .22s cubic-bezier(.4,0,.2,1);
+
+  // Layout
+  --max-width:     900px;
+  --drawer-width:  310px;
+
+  @media (min-width: 1024px) {
+    --drawer-width: 360px;
+  }
+}
+
+// ─────────────────────────────────────────────
+// 4. RESET & BASE
+// ─────────────────────────────────────────────
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  color-scheme: light;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--grey-700);
+  background-color: var(--grey-100);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: 'DM Sans', sans-serif;
+}
+
+// ─────────────────────────────────────────────
+// 5. TYPOGRAPHY
+// ─────────────────────────────────────────────
+.font-display {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--navy);
+  line-height: 1.25;
+}
+
+// ─────────────────────────────────────────────
+// 6. LAYOUT UTILITIES
+// ─────────────────────────────────────────────
+
+// Centred container — used on all authenticated pages
+.page-container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 16px;
+
+  @media (min-width: 768px) {
+    padding: 0 24px;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0 32px;
+  }
+}
+
+// Full-height page wrapper
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+// ─────────────────────────────────────────────
+// 7. STATUS BADGE UTILITIES
+// Used in institute cards, history items, etc.
+// ─────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--green  { background: var(--green-bg);  color: var(--green);  }
+  &--red    { background: var(--red-bg);    color: var(--red);    }
+  &--amber  { background: var(--amber-bg);  color: var(--amber);  }
+  &--blue   { background: var(--sky);       color: var(--blue);   }
+}
+
+// ─────────────────────────────────────────────
+// 8. BUTTON UTILITIES
+// ─────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all var(--transition);
+  white-space: nowrap;
+
+  &--primary {
+    background: var(--blue);
+    color: var(--white);
+    &:hover { background: var(--navy); }
+  }
+
+  &--outline {
+    background: var(--white);
+    color: var(--blue);
+    border: 1.5px solid var(--sky-mid);
+    &:hover { background: var(--sky); }
+  }
+
+  &--danger {
+    background: var(--white);
+    color: var(--red);
+    border: 1.5px solid #FCA5A5;
+    &:hover { background: var(--red-bg); }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--grey-500);
+    &:hover { background: var(--grey-200); }
+  }
+
+  &--full { width: 100%; }
+
+  &--sm {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+// ─────────────────────────────────────────────
+// 9. CARD UTILITY
+// ─────────────────────────────────────────────
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+// ─────────────────────────────────────────────
+// 10. FORM UTILITIES
+// ─────────────────────────────────────────────
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--grey-700);
+  }
+
+  input, select, textarea {
+    width: 100%;
+    border: 1.5px solid var(--grey-200);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--grey-700);
+    outline: none;
+    transition: border-color var(--transition);
+    background: var(--white);
+
+    &:focus { border-color: var(--blue); }
+    &::placeholder { color: var(--grey-300); }
+  }
+}
+
+// ─────────────────────────────────────────────
+// 11. ANGULAR MATERIAL COMPONENT OVERRIDES
+// Align Material components with our design system
+// ─────────────────────────────────────────────
+
+// Toolbar
+.mat-toolbar {
+  background: var(--navy) !important;
+  color: white !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+// Sidenav
+.mat-sidenav {
+  width: var(--drawer-width) !important;
+  border-radius: 0 24px 24px 0 !important;
+}
+
+.mat-sidenav-container {
+  height: 100%;
+  background: var(--grey-100) !important;
+}
+
+// Buttons
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button {
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius) !important;
+  letter-spacing: 0 !important;
+}
+
+// Form fields
+.mat-mdc-form-field {
+  font-family: 'DM Sans', sans-serif !important;
+  width: 100%;
+}
+
+// Snackbar
+.mat-mdc-snack-bar-container {
+  border-radius: var(--radius) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+// ─────────────────────────────────────────────
+// 12. SCROLLBAR STYLING
+// ─────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--grey-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--grey-500); }
+
+// ─────────────────────────────────────────────
+// 13. RESPONSIVE GRID UTILITIES
+// ─────────────────────────────────────────────
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+.two-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+// ─────────────────────────────────────────────
+// 14. EMPTY STATE UTILITY
+// ─────────────────────────────────────────────
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  text-align: center;
+  flex: 1;
+
+  &__icon {
+    width: 72px;
+    height: 72px;
+    background: var(--sky);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+
+  &__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--grey-700);
+    margin-bottom: 8px;
+  }
+
+  &__text {
+    font-size: 14px;
+    color: var(--grey-500);
+    line-height: 1.6;
+    max-width: 280px;
+  }
+}

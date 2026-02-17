@@ -1,0 +1,113 @@
+<div class="report-page">
+  <div class="report-page__bg"></div>
+
+  <div class="report-card">
+
+    <button class="back-btn" (click)="goBack()">← Back</button>
+
+    @if (submitted()) {
+      <div class="success-state">
+        <div class="success-state__icon">✅</div>
+        <h2 class="success-state__heading font-display">Report Submitted</h2>
+        <p class="success-state__text">
+          Thank you for helping keep South African education safe. Your report
+          has been submitted to the Department of Higher Education and Training
+          for review.
+        </p>
+        <button class="submit-btn" (click)="goToSearch()">🔍 Back to Search</button>
+      </div>
+
+    } @else {
+      <div class="report-card__logo font-display">Edu<span>Check</span></div>
+      <h2 class="report-card__heading">Report an Institution</h2>
+      <p class="report-card__sub">
+        Suspect an unregistered or fraudulent institution? Let us know.
+        Reports are reviewed by the DHET.
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Institution name -->
+        <div class="field" [class.field--error]="nameField.invalid && nameField.touched">
+          <label class="field__label">Institution Name *</label>
+          <input
+            class="field__input"
+            type="text"
+            placeholder="e.g. ABC College of Technology"
+            formControlName="reportedInstituteName"
+          />
+          @if (nameField.invalid && nameField.touched) {
+            <span class="field__error">Enter the full institution name (min. 3 chars)</span>
+          }
+        </div>
+
+        <!-- Institution address -->
+        <div class="field" [class.field--error]="addressField.invalid && addressField.touched">
+          <label class="field__label">Physical Address *</label>
+          <input
+            class="field__input"
+            type="text"
+            placeholder="e.g. 12 Main Street, Johannesburg, 2001"
+            formControlName="reportedInstituteAddress"
+          />
+          @if (addressField.invalid && addressField.touched) {
+            <span class="field__error">Enter the institution's physical address</span>
+          }
+        </div>
+
+        <!-- Institution phone -->
+        <div class="field">
+          <label class="field__label">
+            Phone Number <span class="field__optional">(optional)</span>
+          </label>
+          <input
+            class="field__input"
+            type="tel"
+            placeholder="e.g. 011 123 4567"
+            formControlName="reportedInstitutePhone"
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="field" [class.field--error]="descField.invalid && descField.touched">
+          <label class="field__label">
+            Description of Concern *
+            @if (descRemaining > 0) {
+              <span class="field__hint">{{ descRemaining }} more characters needed</span>
+            }
+          </label>
+          <textarea
+            class="field__input field__input--textarea"
+            placeholder="Describe why you believe this institution is fraudulent or unregistered..."
+            formControlName="description"
+            rows="5"
+          ></textarea>
+          @if (descField.invalid && descField.touched) {
+            <span class="field__error">Please provide at least 20 characters of detail</span>
+          }
+        </div>
+
+        <!-- Anonymous notice -->
+        <div class="anon-notice">
+          🔒 Reports are submitted anonymously. Your personal details
+          will never be shared publicly.
+        </div>
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="form.invalid || loading()"
+        >
+          @if (loading()) {
+            <span class="submit-btn__spinner"></span>
+            Submitting...
+          } @else {
+            🚩 Submit Report
+          }
+        </button>
+
+      </form>
+    }
+
+  </div>
+</div>

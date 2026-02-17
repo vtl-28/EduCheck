@@ -1,56 +1,53 @@
 version: "3.9"
+
 services:
+
+  # ─────────────────────────────────────────────────────────────
+  # Backend — .NET API with hot reload via dotnet watch
+  # ─────────────────────────────────────────────────────────────
   educheck-api:
     build:
-      context: .                        # Solution root — Dockerfile can see all projects
+      context: .
       dockerfile: EduCheck.API/Dockerfile
-      target: build                     # Use the build stage (has SDK + dotnet watch)
+      target: build                       # Build stage has SDK + dotnet watch
 
-    # Override the production ENTRYPOINT for hot reload in dev.
-    # dotnet watch rebuilds and restarts the app when source files change.
     command: dotnet watch run --project EduCheck.API/EduCheck.API.csproj --no-launch-profile
 
     ports:
-      - "5169:8080"                     # localhost:5169 → container:8080 (matches your existing local port)
+      - "5169:8080"                       # localhost:5169 → container:8080
 
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
 
-      # ------------------------------------------------------------------
-      # Database — Neon PostgreSQL (connection string from .env)
-      # ------------------------------------------------------------------
+      # Database
       - ConnectionStrings__DefaultConnection=${NEON_CONNECTION_STRING}
 
-      # ------------------------------------------------------------------
-      # JWT settings (from .env)
-      # ------------------------------------------------------------------
+      # JWT
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - JwtSettings__AccessTokenExpirationMinutes=${JWT_ACCESS_TOKEN_EXPIRY_MINUTES:-60}
       - JwtSettings__RefreshTokenExpirationDays=${JWT_REFRESH_TOKEN_EXPIRY_DAYS:-7}
 
-      # ------------------------------------------------------------------
-      # Grafana Cloud / OpenTelemetry (from .env)
-      # ------------------------------------------------------------------
+      # Google OAuth
+      - OAuth__Google__ClientId=${GOOGLE_CLIENT_ID}
+      - OAuth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+
+      # Frontend URL (used by GoogleCallback redirect)
+      - FrontendUrl=http://localhost:4200
+
+      # OpenTelemetry / Grafana Cloud
       - OTEL_SERVICE_NAME=educheck
       - OTEL_EXPORTER_OTLP_ENDPOINT=${GRAFANA_OTLP_ENDPOINT}
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       - OTEL_EXPORTER_OTLP_HEADERS=${GRAFANA_OTLP_HEADERS}
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=educheck-platform,deployment.environment=development
-      # ------------------------------------------------------------------
-      # dotnet watch settings
-      # ------------------------------------------------------------------
-      - DOTNET_USE_POLLING_FILE_WATCHER=true   # Required inside containers on Windows/Mac hosts
+
+      # dotnet watch
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
 
     volumes:
-      # Mount the full solution source so dotnet watch can detect changes.
-      # :cached improves performance on Mac/Windows Docker Desktop.
       - .:/src:cached
-
-      # Prevent the host's obj/bin from overwriting the container's.
-      # These anonymous volumes "shadow" the host directories, keeping
-      # build artifacts isolated inside the container.
       - /src/EduCheck.API/obj
       - /src/EduCheck.API/bin
       - /src/EduCheck.Domain/obj
@@ -61,7 +58,6 @@ services:
       - /src/EduCheck.Infrastructure/bin
 
     working_dir: /src
-
     restart: unless-stopped
 
     healthcheck:
@@ -69,4 +65,34 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s               # Give dotnet watch time to do its first build
+      start_period: 30s
+
+  # ─────────────────────────────────────────────────────────────
+  # Frontend — Angular served by Nginx
+  # In dev we use the production build image for simplicity.
+  # For hot reload, run `ng serve` directly outside Docker instead.
+  # ─────────────────────────────────────────────────────────────
+  educheck-ui:
+    build:
+      context: ./EduCheck.UI
+      dockerfile: Dockerfile
+
+    ports:
+      - "4200:8080"                       # localhost:4200 → container:8080
+
+    # ---------------------------------------------------------------
+    # Wait for the API to be healthy before starting the UI.
+    # This prevents the browser from loading before the API is ready.
+    # ---------------------------------------------------------------
+    depends_on:
+      educheck-api:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

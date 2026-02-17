@@ -3,7 +3,7 @@ using EduCheck.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using EduCheck.Application.Interfaces;
+
 
 namespace EduCheck.API.Controllers;
 
@@ -14,12 +14,14 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
     private readonly IGoogleAuthService _googleAuthService;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger, IGoogleAuthService googleAuthService)
+    public AuthController(IAuthService authService, ILogger<AuthController> logger, IGoogleAuthService googleAuthService, IConfiguration configuration)
     {
         _authService = authService;
         _logger = logger;
         _googleAuthService = googleAuthService;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -249,6 +251,49 @@ public class AuthController : ControllerBase
         return Ok(new { Success = true, User = userDto });
     }
 
+    /// <summary>
+/// Update current user's profile
+/// </summary>
+[HttpPut("profile")]
+[Authorize]
+[ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+[ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+{
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(new AuthResponse
+        {
+            Success = false,
+            Message = "Validation failed",
+            Errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList()
+        });
+    }
+
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+    {
+        return Unauthorized(new AuthResponse
+        {
+            Success = false,
+            Message = "Invalid user"
+        });
+    }
+
+    var result = await _authService.UpdateProfileAsync(userGuid, request);
+
+    if (!result.Success)
+    {
+        return BadRequest(result);
+    }
+
+    return Ok(result);
+}
 
     /// <summary>
     /// Get Google OAuth authorization URL
@@ -263,45 +308,42 @@ public class AuthController : ControllerBase
         return Ok(new { AuthorizationUrl = authUrl });
     }
 
-    /// <summary>
-    /// Google OAuth callback - exchange code for tokens
-    /// </summary>
+
     [HttpGet("google-callback")]
-    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string? error)
+public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string? error)
+{
+    var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+
+    if (!string.IsNullOrEmpty(error))
     {
-        if (!string.IsNullOrEmpty(error))
-        {
-            _logger.LogWarning("Google OAuth error: {Error}", error);
-            return BadRequest(new AuthResponse
-            {
-                Success = false,
-                Message = "Google authentication failed",
-                Errors = new List<string> { error }
-            });
-        }
-
-        if (string.IsNullOrEmpty(code))
-        {
-            return BadRequest(new AuthResponse
-            {
-                Success = false,
-                Message = "Authorization code is required",
-                Errors = new List<string> { "No authorization code provided" }
-            });
-        }
-
-        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
-        var result = await _googleAuthService.AuthenticateAsync(code, redirectUri);
-
-        if (!result.Success)
-        {
-            return BadRequest(result);
-        }
-
-        return Ok(result);
+        return Redirect($"{frontendUrl}/auth/login?error=google_failed");
     }
+
+    if (string.IsNullOrEmpty(code))
+    {
+        return Redirect($"{frontendUrl}/auth/login?error=no_code");
+    }
+
+    var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
+    var result = await _googleAuthService.AuthenticateAsync(code, redirectUri);
+
+    if (!result.Success)
+    {
+        return Redirect($"{frontendUrl}/auth/login?error=google_failed");
+    }
+
+    // Redirect back to Angular with tokens in query params
+    return Redirect(
+        $"{frontendUrl}/auth/google-callback" +
+        $"?accessToken={Uri.EscapeDataString(result.AccessToken!)}" +
+        $"&refreshToken={Uri.EscapeDataString(result.RefreshToken!)}" +
+        $"&userId={Uri.EscapeDataString(result.User?.Id.ToString() ?? "")}" +
+        $"&email={Uri.EscapeDataString(result.User?.Email ?? "")}" +
+        $"&firstName={Uri.EscapeDataString(result.User?.FirstName ?? "")}" +
+        $"&lastName={Uri.EscapeDataString(result.User?.LastName ?? "")}" +
+        $"&role={Uri.EscapeDataString(result.User?.Role.ToString() ?? "Student")}"
+    );
+}
 
     /// <summary>
     /// Google OAuth - authenticate with code (for mobile/SPA apps)

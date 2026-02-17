@@ -1,0 +1,37 @@
+# Dependencies — never copy node_modules into the build context.
+# Docker will run npm ci inside the container instead.
+node_modules/
+
+# Angular build output — rebuilt inside Docker.
+dist/
+
+# Development and test files
+*.spec.ts
+*.test.ts
+e2e/
+coverage/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Environment files — injected at runtime, not baked into the image.
+.env
+.env.*
+src/environments/environment.development.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker files (no need to copy into itself)
+Dockerfile
+.dockerignore

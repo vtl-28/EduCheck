@@ -11,4 +11,5 @@ public interface IAuthService
     Task<AuthResponse> ExternalLoginAsync(ExternalAuthRequest request);
     Task<bool> RevokeRefreshTokenAsync(string refreshToken);
     Task<bool> RevokeAllUserTokensAsync(Guid userId);
+    Task<AuthResponse> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
 }

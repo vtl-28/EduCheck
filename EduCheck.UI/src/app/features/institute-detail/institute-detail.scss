@@ -1,0 +1,271 @@
+// ─────────────────────────────────────────────────────────────
+// Institute Detail Page Styles
+// ─────────────────────────────────────────────────────────────
+
+.detail-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--grey-100);
+}
+
+// ── App Bar ───────────────────────────────────────────────────
+.app-bar {
+  background: var(--navy);
+  padding: 12px 16px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+
+  @media (min-width: 1024px) {
+    padding: 14px 32px;
+  }
+
+  &__back {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    color: var(--white);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+    flex-shrink: 0;
+
+    &:hover { background: rgba(255, 255, 255, 0.22); }
+  }
+
+  &__title {
+    flex: 1;
+    text-align: center;
+    color: var(--white);
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  &__spacer {
+    width: 38px;
+    flex-shrink: 0;
+  }
+}
+
+// ── Hero ──────────────────────────────────────────────────────
+.detail-hero {
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 100%);
+  padding: 20px 16px 28px;
+  flex-shrink: 0;
+
+  @media (min-width: 1024px) {
+    padding: 28px 32px 36px;
+  }
+
+  &__inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  &__name {
+    color: var(--white);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 14px;
+
+    @media (min-width: 1024px) { font-size: 24px; }
+  }
+
+  &--skeleton {
+    padding: 24px 16px 32px;
+  }
+}
+
+// ── Status banner ─────────────────────────────────────────────
+.status-banner {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 700;
+
+  &--green { background: var(--green-bg); color: var(--green); }
+  &--red   { background: var(--red-bg);   color: var(--red);   }
+  &--amber { background: var(--amber-bg); color: var(--amber); }
+}
+
+// ── Warning banner ────────────────────────────────────────────
+.warning-banner {
+  background: var(--red-bg);
+  border-left: 4px solid var(--red);
+  color: var(--red);
+  padding: 14px 20px;
+  font-size: 14px;
+  line-height: 1.6;
+
+  @media (min-width: 1024px) {
+    padding: 16px 32px;
+  }
+
+  strong { font-weight: 700; }
+}
+
+// ── Detail body ───────────────────────────────────────────────
+.detail-body {
+  padding: 20px 16px;
+  flex: 1;
+
+  @media (min-width: 1024px) {
+    padding: 28px 32px;
+  }
+}
+
+// Desktop two-column grid for the two cards
+.detail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+
+  @media (min-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+// ── Detail card ───────────────────────────────────────────────
+.detail-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+
+  &__title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--grey-500);
+    margin-bottom: 14px;
+  }
+}
+
+// ── Detail row ────────────────────────────────────────────────
+.detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--grey-200);
+  align-items: flex-start;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--grey-500);
+    width: 96px;
+    flex-shrink: 0;
+    padding-top: 2px;
+    line-height: 1.4;
+  }
+
+  &__value {
+    font-size: 14px;
+    color: var(--grey-700);
+    font-weight: 500;
+    flex: 1;
+    line-height: 1.5;
+
+    a {
+      color: var(--blue);
+      word-break: break-all;
+    }
+  }
+}
+
+// ── CTA buttons ───────────────────────────────────────────────
+.cta-row {
+  display: flex;
+  gap: 12px;
+
+  @media (min-width: 768px) {
+    max-width: 480px;
+  }
+}
+
+.cta-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition);
+
+  &--primary {
+    background: var(--blue);
+    color: var(--white);
+    &:hover:not(:disabled) { background: var(--navy); }
+    &:disabled { opacity: 0.7; cursor: not-allowed; }
+  }
+
+  &--saved {
+    background: var(--green);
+    color: var(--white);
+    &:hover:not(:disabled) { background: #155f3a; }
+  }
+
+  &--danger {
+    background: var(--white);
+    color: var(--red);
+    border: 1.5px solid #FCA5A5;
+    &:hover { background: var(--red-bg); }
+  }
+}
+
+// ── Skeleton loaders ──────────────────────────────────────────
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--grey-200) 25%,
+    var(--grey-100) 50%,
+    var(--grey-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+
+  &--heading { height: 28px; width: 75%; margin-bottom: 14px; }
+  &--badge   { height: 34px; width: 140px; border-radius: 24px; }
+  &--label   { height: 13px; width: 80px; flex-shrink: 0; }
+  &--value   { height: 13px; flex: 1; }
+}
+
+.skeleton-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--grey-200);
+  align-items: center;
+
+  &:last-child { border-bottom: none; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
