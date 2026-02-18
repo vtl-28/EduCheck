@@ -39,6 +39,13 @@ RUN npm run build -- --configuration production
 FROM nginx:1.27-alpine AS runtime
 
 # ---------------------------------------------------------------------------
+# Security: Upgrade all packages to latest patch versions to fix CVEs.
+# This pulls in openssl 3.3.6, libpng 1.6.54, libxml2 2.13.9 which fix
+# the CRITICAL/HIGH vulnerabilities flagged by Trivy.
+# ---------------------------------------------------------------------------
+RUN apk upgrade --no-cache
+
+# ---------------------------------------------------------------------------
 # Security: create a dedicated non-root user and group.
 # Running as root gives an attacker root-level access to everything
 # the container can reach.
