@@ -1,0 +1,141 @@
+<div class="landing">
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <div class="navbar__logo">
+        Edu<span>Check</span>
+      </div>
+      <div class="navbar__actions">
+        <button class="btn-ghost" (click)="goToLogin()">Login</button>
+        <button class="btn-solid" (click)="goToRegister()">Get Started</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero__inner">
+      <div class="hero__tag">✅ Verify. Trust. Report.</div>
+      <h1 class="hero__heading font-display">
+        Know Before<br>You <span class="hero__heading--accent">Enroll</span>
+      </h1>
+      <p class="hero__subtext">
+        EduCheck is a free, public tool helping South African students and parents
+        verify private learning institutions — before committing time and money.
+      </p>
+
+      <!-- Search bar -->
+      <div class="hero__search">
+        <div class="search-bar">
+          <span class="search-bar__icon">🔍</span>
+          <input
+            class="search-bar__input"
+            type="text"
+            placeholder="Search any institution name..."
+            [(ngModel)]="searchQuery"
+            (keydown)="onSearchKeydown($event)"
+          />
+          <button class="search-bar__btn" (click)="onSearch()">
+            Search
+          </button>
+        </div>
+        <p class="hero__search-hint">
+          Free to use · No account required to search
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ── -->
+  <section class="section">
+    <div class="section__inner">
+      <h2 class="section__title font-display">How EduCheck Works</h2>
+      <p class="section__subtitle">Three simple steps to verify any institution</p>
+      <div class="how-grid">
+        @for (item of howItWorks; track item.step) {
+          <div class="how-card">
+            <div class="how-card__step">{{ item.step }}</div>
+            <div class="how-card__icon">{{ item.icon }}</div>
+            <h3 class="how-card__title">{{ item.title }}</h3>
+            <p class="how-card__desc">{{ item.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <section class="section section--grey">
+    <div class="section__inner">
+      <h2 class="section__title font-display">Features</h2>
+      <p class="section__subtitle">Everything you need to make informed education decisions</p>
+      <div class="features-grid">
+        @for (feature of features; track feature.title) {
+          <div class="feature-card">
+            <div class="feature-card__icon">{{ feature.icon }}</div>
+            <h3 class="feature-card__title">{{ feature.title }}</h3>
+            <p class="feature-card__desc">{{ feature.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Who It's For ── -->
+  <section class="section">
+    <div class="section__inner">
+      <h2 class="section__title font-display">Who Is It For?</h2>
+      <p class="section__subtitle">Built for everyone affected by unregistered institutions</p>
+      <div class="persona-grid">
+        @for (persona of personas; track persona.title) {
+          <div class="persona-card">
+            <div class="persona-card__icon">{{ persona.icon }}</div>
+            <h3 class="persona-card__title">{{ persona.title }}</h3>
+            <p class="persona-card__desc">{{ persona.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── About ── -->
+  <section class="section section--navy">
+    <div class="section__inner section__inner--centered">
+      <h2 class="section__title section__title--white font-display">About EduCheck</h2>
+      <p class="about__text">
+        EduCheck was created to solve a growing problem in South Africa's education space:
+        the unchecked rise of unregistered private learning institutions. Thousands of
+        students unknowingly enroll in programs that lead to invalid qualifications,
+        wasting time, money, and opportunity. EduCheck steps in to provide transparency,
+        trust, and tools to verify institutions before committing.
+      </p>
+      <button class="btn-solid btn-solid--lg" (click)="goToRegister()">
+        Get Started — It's Free
+      </button>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__logo font-display">
+        Edu<span>Check</span>
+      </div>
+      <p class="footer__tagline">
+        Empowering South African students with the tools to verify, trust, and report.
+      </p>
+      <p class="footer__contact">
+        Questions or feedback?
+        <a href="mailto:support@educheck.co.za">support&#64;educheck.co.za</a>
+      </p>
+      <p class="footer__coming-soon">
+        🔔 Coming soon: Sign up for alerts about flagged institutions and new features.
+      </p>
+      <p class="footer__copy">
+        © {{ currentYear }} EduCheck · Built for South African students
+      </p>
+    </div>
+  </footer>
+
+</div>

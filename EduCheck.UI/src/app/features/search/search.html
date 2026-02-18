@@ -1,0 +1,143 @@
+<div class="search-page" [class.search-page--drawer-open]="drawerOpen()">
+
+  @if (drawerOpen()) {
+    <div class="drawer-overlay" (click)="drawerOpen.set(false)"></div>
+  }
+
+  <div class="drawer-container" [class.drawer-container--open]="drawerOpen()">
+    <app-drawer
+      (closed)="drawerOpen.set(false)"
+      (instituteSelected)="openFromDrawer($event)"
+    />
+  </div>
+
+  <div class="search-main">
+
+    <div class="app-bar">
+      <button class="app-bar__menu-btn" (click)="drawerOpen.set(true)" aria-label="Open menu">
+        <span class="hamburger-icon"><span></span><span></span><span></span></span>
+      </button>
+      <div class="app-bar__logo font-display">Edu<span>Check</span></div>
+      <div class="app-bar__avatar">{{ userInitials() }}</div>
+    </div>
+
+    <div class="search-hero">
+      <div class="search-hero__inner">
+        <h2 class="search-hero__greeting">{{ greeting() }}, {{ displayName().split(' ')[0] }} 👋</h2>
+        <p class="search-hero__hint">Search any institution to verify its accreditation</p>
+
+        <div class="search-box" [class.search-box--active]="searchQuery()">
+          <span class="search-box__icon">🔍</span>
+          <input
+            class="search-box__input"
+            type="text"
+            placeholder="Search institution name..."
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+            autocomplete="off"
+          />
+          @if (searchQuery()) {
+            <button class="search-box__clear" (click)="clearSearch()">✕</button>
+          }
+        </div>
+
+        <div class="filter-chips">
+          @for (province of provinces; track province) {
+            <div
+              class="filter-chip"
+              [class.filter-chip--active]="(selectedProvince() || 'All Provinces') === province"
+              (click)="selectProvince(province)"
+            >
+              {{ province }}
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="results-area">
+      <div class="page-container">
+
+        @if (loading()) {
+          <div class="results-grid">
+            @for (i of [1,2,3,4]; track i) {
+              <div class="skeleton-card">
+                <div class="skeleton skeleton--title"></div>
+                <div class="skeleton skeleton--badge"></div>
+                <div class="skeleton skeleton--meta"></div>
+                <div class="skeleton skeleton--actions"></div>
+              </div>
+            }
+          </div>
+
+        } @else if (!hasSearched()) {
+          <div class="empty-state">
+            <div class="empty-state__icon">🏫</div>
+            <h3 class="empty-state__title">Search an institution</h3>
+            <p class="empty-state__text">
+              Enter a name above to check if it's accredited by the
+              Department of Higher Education and Training
+            </p>
+          </div>
+
+        } @else if (results().length === 0) {
+          <!-- No results — show report option for unregistered institutes -->
+          <div class="empty-state">
+            <div class="empty-state__icon">🔍</div>
+            <h3 class="empty-state__title">No results found</h3>
+            <p class="empty-state__text">
+              This institution does not appear in the DHET accreditation register.
+              If you suspect it is operating illegally, you can report it.
+            </p>
+            <button class="report-unknown-btn" (click)="reportUnknown()">
+              🚩 Report Unregistered Institution
+            </button>
+          </div>
+
+        } @else {
+          <div class="results-header">
+            {{ results().length }} result{{ results().length !== 1 ? 's' : '' }}
+            for <strong>"{{ searchQuery() }}"</strong>
+          </div>
+
+          <div class="results-grid">
+            @for (result of results(); track result.id) {
+              <div class="institute-card" (click)="openInstitute(result)">
+                <div class="institute-card__top">
+                  <h3 class="institute-card__name">{{ result.institutionName }}</h3>
+                  <span class="badge" [class]="badgeClass(result)">
+                    {{ badgeLabel(result) }}
+                  </span>
+                </div>
+                <div class="institute-card__meta">
+                  <span>📍 {{ result.province ?? 'N/A' }}</span>
+                  <span>🏷 {{ result.providerType }}</span>
+                </div>
+                <div class="institute-card__actions">
+                  <button
+                    class="card-action-btn"
+                    [class.card-action-btn--faved]="isFavorite(result.id)"
+                    (click)="toggleFavorite(result, $event)"
+                  >
+                    {{ isFavorite(result.id) ? '❤️ Saved' : '🤍 Favorite' }}
+                  </button>
+                  <!-- Report only shown for non-accredited institutes -->
+                  @if (!result.isAccredited) {
+                    <button
+                      class="card-action-btn card-action-btn--report"
+                      (click)="reportInstitute(result, $event)"
+                    >
+                      🚩 Report
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+
+  </div>
+</div>

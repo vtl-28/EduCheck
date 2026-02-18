@@ -1,0 +1,106 @@
+<div class="drawer" (click)="closeCtxMenu()">
+
+  <div class="drawer__header">
+    <div class="drawer__logo font-display">Edu<span>Check</span></div>
+    <button class="drawer__close" (click)="close()">✕</button>
+  </div>
+
+  <div class="drawer__search-wrap">
+    <div class="drawer__search-box">
+      <span class="drawer__search-icon">🔍</span>
+      <input
+        class="drawer__search-input"
+        type="text"
+        placeholder="Search history..."
+        [value]="historyFilter()"
+        (input)="onFilterChange($any($event.target).value)"
+      />
+      @if (historyFilter()) {
+        <button class="drawer__search-clear" (click)="onFilterChange('')">✕</button>
+      }
+    </div>
+  </div>
+
+  <div class="drawer__nav-top">
+    <div class="drawer__nav-item" (click)="onNewSearch()">
+      <div class="drawer__nav-icon">🔍</div>
+      <span>New Search</span>
+    </div>
+  </div>
+
+  <div class="drawer__history">
+
+    @if (loading()) {
+      <div class="drawer__loading">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="skeleton-item">
+            <div class="skeleton skeleton--dot"></div>
+            <div class="skeleton skeleton--text"></div>
+          </div>
+        }
+      </div>
+    } @else if (groupedHistory().length === 0) {
+      <div class="drawer__empty">
+        @if (historyFilter()) {
+          <p>No results for <strong>"{{ historyFilter() }}"</strong></p>
+        } @else {
+          <p>No search history yet.<br>Start by searching an institution.</p>
+        }
+      </div>
+    } @else {
+      @for (group of groupedHistory(); track group.label) {
+        <div class="drawer__date-label">{{ group.label }}</div>
+        @for (entry of group.entries; track entry.id) {
+          <div
+            class="drawer__hist-item"
+            (click)="onInstituteClick(entry)"
+            role="button"
+            tabindex="0"
+            (keydown.enter)="onInstituteClick(entry)"
+          >
+            <div class="drawer__dot" [class]="statusDotClass(entry)"></div>
+            <span class="drawer__hist-name">{{ entry.institute.institutionName }}</span>
+            <button
+              class="drawer__ctx-trigger"
+              (click)="toggleCtxMenu(entry.id, $event)"
+            >⋮</button>
+
+            @if (activeCtxId() === entry.id) {
+              <div class="ctx-menu" (click)="$event.stopPropagation()">
+                <div class="ctx-menu__item" (click)="addToFavorites(entry, $event)">
+                  🤍 Add to Favorites
+                </div>
+                <div class="ctx-menu__item ctx-menu__item--danger" (click)="deleteEntry(entry, $event)">
+                  🗑 Delete
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+
+  </div>
+
+  <div class="drawer__footer">
+
+    @if (userMenuOpen()) {
+      <div class="user-menu">
+        <div class="user-menu__item" (click)="goToProfile()">👤 My Profile</div>
+        <div class="user-menu__item" (click)="goToFavorites()">❤️ My Favorites</div>
+        <div class="user-menu__item user-menu__item--danger" (click)="logout()">🚪 Logout</div>
+      </div>
+    }
+
+    <div class="user-pill" (click)="toggleUserMenu($event)">
+      <div class="user-pill__avatar">{{ userInitials() }}</div>
+      <div class="user-pill__info">
+        <div class="user-pill__name">{{ displayName() }}</div>
+        <div class="user-pill__role">{{ currentUser()?.role }}</div>
+      </div>
+      <span class="user-pill__chevron" [class.user-pill__chevron--up]="userMenuOpen()">⌃</span>
+    </div>
+
+  </div>
+
+</div>
