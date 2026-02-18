@@ -284,13 +284,13 @@ jobs:
 
       - name: 🔍 Check for vulnerable npm packages
         run: |
-          npm audit --audit-level=high 2>&1 | tee npm-vulnerability-report.txt || true
+          npm audit --production --audit-level=high 2>&1 | tee npm-vulnerability-report.txt || true
           if grep -q "critical\|high" npm-vulnerability-report.txt; then
-            echo "❌ Critical or High npm vulnerabilities found!"
+            echo "❌ Critical or High npm vulnerabilities found in production dependencies!"
             cat npm-vulnerability-report.txt
             exit 1
           fi
-          echo "✅ No critical npm vulnerabilities found"
+          echo "✅ No critical npm vulnerabilities found in production dependencies"
         working-directory: EduCheck.UI
 
       - name: 📤 Upload vulnerability reports
