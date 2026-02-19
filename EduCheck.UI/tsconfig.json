@@ -29,5 +29,12 @@
     {
       "path": "./tsconfig.spec.json"
     }
+  ],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "playwright.config.ts",
+    "playwright-report",
+    "test-results"
   ]
 }

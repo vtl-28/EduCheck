@@ -41,6 +41,8 @@
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.0",
     "@angular/material": "^21.1.4",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.2.3",
     "angular-eslint": "21.2.0",
     "eslint": "^9.39.2",
     "jsdom": "^27.1.0",
