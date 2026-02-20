@@ -58,7 +58,17 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod()
                 .AllowCredentials();
         }
-        else
+        else if (builder.Environment.IsStaging())
+        {
+            policy
+                .WithOrigins(
+                    "http://16.170.145.114:4200"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+        else // Production
         {
             policy
                 .WithOrigins(
