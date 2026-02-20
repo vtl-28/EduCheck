@@ -49,6 +49,13 @@ RUN dotnet publish EduCheck.API/EduCheck.API.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
 
 # ---------------------------------------------------------------------------
+# Install ICU libraries required for .NET globalization support.
+# Without these, .NET 9 fails to start with the error:
+# "Couldn't find a valid ICU package installed on the system"
+# ---------------------------------------------------------------------------
+RUN apk add --no-cache icu-libs icu-data-full
+
+# ---------------------------------------------------------------------------
 # Security: create a dedicated non-root user and group.
 # Running as root inside a container gives an attacker root-level access
 # to everything the container can reach. This limits the blast radius.
