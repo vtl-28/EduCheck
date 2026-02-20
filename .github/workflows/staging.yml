@@ -307,10 +307,10 @@ jobs:
               docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
             
             # Pull latest images
-            docker compose pull
+            docker-compose pull
             
             # Restart services
-            docker compose up -d
+            docker-compose up -d
             
             # Wait for services to be healthy
             sleep 30
@@ -318,14 +318,58 @@ jobs:
             # Health check API
             curl -f http://localhost:5169/health || exit 1
 
-  # TODO: E2E tests will be added here after EC2 is set up
-  # They will run against the deployed staging environment
+  # E2E tests against deployed staging environment
+  e2e-tests:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: deploy-staging
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
+
+      - name: Install dependencies
+        working-directory: EduCheck.UI
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: EduCheck.UI
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E Tests
+        working-directory: EduCheck.UI
+        env:
+          BASE_URL: http://16.170.145.114:4200
+        run: npx playwright test --project=chromium
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: EduCheck.UI/playwright-report/
+          retention-days: 7
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: EduCheck.UI/test-results/
+          retention-days: 7
   
   # Final status
   staging-success:
     name: ✅ Staging Deployment Success
     runs-on: ubuntu-latest
-    needs: [deploy-staging]
+    needs: [deploy-staging, e2e-tests]
     if: success()
     steps:
       - run: |
