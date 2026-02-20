@@ -1,0 +1,335 @@
+name: Staging Branch CI/CD
+
+on:
+  push:
+    branches:
+      - staging
+  pull_request:
+    branches:
+      - staging
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  NODE_VERSION: '22'
+  AWS_REGION: eu-north-1
+
+jobs:
+  # Reuse all checks from development workflow
+  lint-backend:
+    name: 🔍 Backend Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore EduCheck.sln
+      - run: dotnet format EduCheck.sln --verify-no-changes --verbosity diagnostic
+
+  lint-frontend:
+    name: 🔍 Frontend Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
+      - run: npm ci
+        working-directory: EduCheck.UI
+      - run: npm run lint
+        working-directory: EduCheck.UI
+
+  build-backend:
+    name: 🏗️ Backend Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: lint-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore EduCheck.sln
+      - run: dotnet build EduCheck.sln --configuration Release --no-restore
+
+  build-frontend:
+    name: 🏗️ Frontend Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: lint-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
+      - run: npm ci
+        working-directory: EduCheck.UI
+      - run: npm run build -- --configuration production
+        working-directory: EduCheck.UI
+
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore EduCheck.sln
+      - run: dotnet build EduCheck.sln --configuration Release --no-restore
+      - run: |
+          dotnet test EduCheck.Tests/EduCheck.Tests.csproj \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=unit-test-results.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/Unit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: ./TestResults/Unit
+          retention-days: 7
+
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore EduCheck.sln
+      - run: dotnet build EduCheck.sln --configuration Release --no-restore
+      - run: docker info
+      - run: |
+          dotnet test EduCheck.IntegrationTests/EduCheck.IntegrationTests.csproj \
+            --configuration Release \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=integration-test-results.trx" \
+            --results-directory ./TestResults/Integration
+        env:
+          DOTNET_ENVIRONMENT: Testing
+          JWT_SECRET_KEY_TEST: ${{ secrets.JWT_SECRET_KEY_TEST }}
+
+  sast:
+    name: 🛡️ SAST Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: lint-backend
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/csharp
+            p/dotnet
+            p/owasp-top-ten
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  secret-scan:
+    name: 🔐 Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: lint-backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  dependency-check:
+    name: 📦 Dependency Vulnerabilities
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: lint-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore EduCheck.sln
+      - run: |
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vulnerability-report.txt
+          if grep -q "Critical\|High" vulnerability-report.txt; then
+            echo "❌ Critical or High vulnerabilities found!"
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: EduCheck.UI/package-lock.json
+      - run: npm ci
+        working-directory: EduCheck.UI
+      - run: npm audit --production --audit-level=high
+        working-directory: EduCheck.UI
+
+  # Build and push Docker images to ECR
+  build-and-push-images:
+    name: 🐳 Build & Push to ECR
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build-backend, build-frontend, unit-tests, integration-tests, sast, secret-scan, dependency-check]
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      api-image: ${{ steps.build-api.outputs.image }}
+      ui-image: ${{ steps.build-ui.outputs.image }}
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Version
+        id: version
+        run: |
+          VERSION=$(date +'%Y.%m.%d').${{ github.run_number }}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build API Docker Image
+        id: build-api
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: educheck-api
+          IMAGE_TAG: ${{ steps.version.outputs.version }}
+        run: |
+          docker build \
+            --file EduCheck.API/Dockerfile \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:staging \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build UI Docker Image
+        id: build-ui
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: educheck-ui
+          IMAGE_TAG: ${{ steps.version.outputs.version }}
+        run: |
+          docker build \
+            --file EduCheck.UI/Dockerfile \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:staging \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            EduCheck.UI/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Scan API Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.build-api.outputs.image }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Scan UI Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.build-ui.outputs.image }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+  # Deploy to EC2 staging environment
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build-and-push-images
+    environment:
+      name: staging
+      url: http://16.170.145.114:4200
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/educheck
+            
+            # Login to ECR
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
+            
+            # Pull latest images
+            docker-compose pull
+            
+            # Restart services
+            docker-compose up -d
+            
+            # Wait for services to be healthy
+            sleep 30
+            
+            # Health check API
+            curl -f http://localhost:5169/health || exit 1
+
+  # TODO: E2E tests will be added here after EC2 is set up
+  # They will run against the deployed staging environment
+  
+  # Final status
+  staging-success:
+    name: ✅ Staging Deployment Success
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: success()
+    steps:
+      - run: |
+          echo "🎉 Staging deployment successful!"
+          echo "Version: ${{ needs.build-and-push-images.outputs.version }}"
+          echo "Frontend: http://16.170.145.114:4200"
+          echo "API: http://16.170.145.114:5169"
