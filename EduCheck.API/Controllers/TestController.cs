@@ -23,7 +23,7 @@ public class TestController : ControllerBase
     {
         _logger.LogInformation("Test endpoint called");
 
-        // Simulate a search metric
+
         _businessMetrics.RecordInstituteSearch(found: true, searchType: "test");
 
         return Ok(new { message = "pong", timestamp = DateTime.UtcNow });
@@ -32,7 +32,7 @@ public class TestController : ControllerBase
     [HttpGet("business-test")]
     public IActionResult BusinessTest()
     {
-        // Record various business metrics for testing
+
         _businessMetrics.RecordInstituteSearch(found: true, searchType: "name");
         _businessMetrics.RecordSearchDuration(150.5, found: true);
         _businessMetrics.RecordLoginAttempt(success: true);

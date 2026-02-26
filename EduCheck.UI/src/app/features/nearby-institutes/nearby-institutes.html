@@ -1,0 +1,73 @@
+<div class="nearby-page">
+  <div class="page-header">
+    <div class="page-header__content">
+      <h1 class="page-header__title">📍 Find Nearby Institutes</h1>
+      <p class="page-header__subtitle">
+        Discover educational institutions near your location
+      </p>
+    </div>
+  </div>
+
+  <div class="page-content">
+    @if (loading()) {
+      <div class="loading-overlay">
+        <div class="loading-card">
+          <div class="spinner"></div>
+          <h3>Getting your location...</h3>
+          <p>Please allow location access when prompted</p>
+        </div>
+      </div>
+    } @else if (error()) {
+      <div class="error-overlay">
+        <div class="error-card">
+          <span class="error-card__icon">⚠️</span>
+          <h3>Location Error</h3>
+          <p>{{ error() }}</p>
+          <div class="error-card__actions">
+            <button class="btn btn--primary" (click)="retrySearch()">
+              Try Again
+            </button>
+          </div>
+          <div class="error-card__help">
+            <p><strong>Troubleshooting:</strong></p>
+            <ul>
+              <li>Check that location permissions are enabled</li>
+              <li>Make sure you're using HTTPS or localhost</li>
+              <li>Try refreshing the page</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    } @else if (hasSearched() && coordinates()) {
+      <div class="controls-section">
+        <app-radius-selector
+          [disabled]="searching"
+          [resultsCount]="totalCount"
+          (radiusChange)="onRadiusChange($event)"
+        />
+      </div>
+
+      <div class="content-grid">
+        <!-- Map Column -->
+        <div class="map-column">
+          <app-map-view
+            [userLocation]="{ lat: coordinates()!.latitude, lng: coordinates()!.longitude }"
+            [institutes]="institutes()"
+            [zoom]="getZoomLevel()"
+            (viewDetails)="onViewDetails($event)"
+          />
+        </div>
+
+        <!-- List Column -->
+        <div class="list-column">
+          <app-institute-list
+            [institutes]="institutes()"
+            [loading]="searching"
+            (selectInstitute)="onSelectInstitute($event)"
+            (viewDetails)="onViewDetails($event)"
+          />
+        </div>
+      </div>
+    }
+  </div>
+</div>

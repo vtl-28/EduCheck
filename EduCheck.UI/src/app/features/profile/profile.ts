@@ -76,7 +76,7 @@ export class Profile implements OnInit {
       .subscribe({
         next: (_res) => {
           this.saving.set(false);
-          // Update stored user with new name/phone
+         
           const user = this.currentUser();
           if (user) {
             const updated = {

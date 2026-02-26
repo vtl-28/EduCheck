@@ -14,12 +14,11 @@ using EduCheck.API.Metrics;
 using EduCheck.API.Middleware;
 using OpenTelemetry.Metrics;
 using EduCheck.Infrastructure.Security;
+using EduCheck.Application.Interfaces;
+using EduCheck.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================
-// Logging Configuration with OpenTelemetry
-// ============================================
 builder.Logging.AddTelemetryLogging(builder.Configuration);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -40,9 +39,9 @@ builder.Services.AddTelemetry(builder.Configuration);
 
 builder.Services.AddSingleton<BusinessMetrics>();
 
-// ============================================
-// CORS Configuration
-// ============================================
+builder.Services.AddHttpClient<IGeocodingService, GeocodingService>();
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("EduCheckCors", policy =>
@@ -68,7 +67,7 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod()
                 .AllowCredentials();
         }
-        else // Production
+        else
         {
             policy
                 .WithOrigins(
@@ -82,33 +81,26 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ============================================
-// Health Checks Configuration
-// ============================================
+
 builder.Services.AddSingleton<StartupHealthCheck>();
 builder.Services.AddHealthChecks()
-    // Liveness - Is the app running?
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
 
-    // Database connectivity
     .AddCheck<DatabaseHealthCheck>(
         "database",
         failureStatus: HealthStatus.Unhealthy,
         tags: new[] { "ready", "db" })
 
-    // Memory check
     .AddCheck<MemoryHealthCheck>(
         "memory",
         failureStatus: HealthStatus.Degraded,
         tags: new[] { "ready" })
 
-    // Startup check
     .AddCheck<StartupHealthCheck>(
         "startup",
         failureStatus: HealthStatus.Unhealthy,
         tags: new[] { "ready" })
 
-    // PostgreSQL direct check (backup)
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection")!,
         name: "postgresql",
@@ -119,7 +111,6 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddRateLimiter(options =>
 {
-    // Favorites rate limiter: 20 requests per minute per user
     options.AddPolicy("favorites", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.User.Identity?.Name
@@ -133,7 +124,6 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
-    // Global rejection handling
     options.OnRejected = async (context, cancellationToken) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
@@ -181,9 +171,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// ============================================
-// Security Services
-// ============================================
+
 builder.Services.AddSecurityServices();
 builder.Services.AddSingleton<SecurityMetrics>();
 
@@ -205,67 +193,48 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-//app.UseHttpsRedirection();
 app.UseGlobalExceptionHandler();
 
 app.UseCors("EduCheckCors");
 app.UseAuthentication();
 
-// Only use rate limiter middleware if it was registered
 if (!app.Environment.IsEnvironment("Testing"))
 {
     app.UseRateLimiter();
 }
 
 app.UseAuthorization();
-// ============================================
-// Security Monitoring Middleware
-// ============================================
 app.UseSecurityMonitoring();
 app.UseTelemetryEnrichment();
-// ============================================
-// Health Check Endpoints
-// ============================================
 
-// Liveness probe - Is the app running?
-// Used by: Kubernetes liveness probe, load balancer
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("live"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-// Readiness probe - Can it accept traffic?
-// Used by: Kubernetes readiness probe, load balancer
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-// Database health - Is the database connected?
-// Used by: Monitoring, debugging
 app.MapHealthChecks("/health/db", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("db"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-// Full health check - All checks
-// Used by: Detailed monitoring
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-// Mark application as ready after startup
 var startupHealthCheck = app.Services.GetRequiredService<StartupHealthCheck>();
 startupHealthCheck.SetReady();
-
-// app.MapPrometheusScrapingEndpoint("/metrics");
 
 app.MapControllers();
 
 app.Run();
-// Make Program class accessible to integration tests
 public partial class Program { }

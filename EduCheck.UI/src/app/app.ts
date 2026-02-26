@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ToastService } from './shared/services/toast';
 
 @Component({
   selector: 'app-root',
@@ -10,5 +11,6 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   protected readonly title = signal('EduCheck.UI');
+  constructor(public toastService: ToastService) {}
 }
 

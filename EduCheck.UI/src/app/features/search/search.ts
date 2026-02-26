@@ -147,13 +147,11 @@ export class Search implements OnInit {
     return this.favoriteIds().has(id.toString());
   }
 
-  // Only called for non-accredited institutes from the card
   reportInstitute(result: Institute, event: Event): void {
     event.stopPropagation();
     this.router.navigate(['/report', result.id]);
   }
 
-  // Called from empty state when institution not found in register
   reportUnknown(): void {
     this.router.navigate(['/report'], {
       queryParams: { name: this.searchQuery() },

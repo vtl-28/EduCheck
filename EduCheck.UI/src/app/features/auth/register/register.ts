@@ -64,14 +64,12 @@ export class Register {
     );
   }
 
-  // ── Field getters ──────────────────────────────────────────
   get firstName()       { return this.form.get('firstName')!; }
   get lastName()        { return this.form.get('lastName')!; }
   get email()           { return this.form.get('email')!; }
   get password()        { return this.form.get('password')!; }
   get confirmPassword() { return this.form.get('confirmPassword')!; }
 
-  // ── Error messages ─────────────────────────────────────────
   get firstNameError(): string {
     if (this.firstName.hasError('required')) return 'First name is required';
     if (this.firstName.hasError('minlength')) return 'Must be at least 2 characters';
@@ -111,7 +109,6 @@ export class Register {
     );
   }
 
-  // ── Submit ─────────────────────────────────────────────────
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;
 
@@ -119,8 +116,7 @@ export class Register {
     this.form.disable();
 
     // //const { confirmPassword, ...payload } = this.form.value;
-    // console.log('Form value on submit:', this.form.value);
-    // Convert empty strings to null so API validation passes
+
   const raw = this.form.value;
   const payload = {
     ...raw,

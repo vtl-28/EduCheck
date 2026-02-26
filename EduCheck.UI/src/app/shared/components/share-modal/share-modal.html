@@ -1,0 +1,45 @@
+<div class="modal-overlay" (click)="onOverlayClick()">
+  <div class="share-modal" (click)="onModalClick($event)">
+    <div class="modal-header">
+      <h3 class="modal-title">{{ title() }}</h3>
+      <button class="close-icon" (click)="close.emit()" aria-label="Close">
+        ✕
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="share-options">
+        <button class="share-option" (click)="copyLink()">
+          <span class="option-icon">🔗</span>
+          <div class="option-content">
+            <span class="option-title">Copy Link</span>
+            <span class="option-description">Share via any app</span>
+          </div>
+        </button>
+        
+        <button class="share-option" (click)="shareOnWhatsApp()">
+          <span class="option-icon">💬</span>
+          <div class="option-content">
+            <span class="option-title">WhatsApp</span>
+            <span class="option-description">Share via WhatsApp</span>
+          </div>
+        </button>
+      </div>
+      
+      <div class="url-preview">
+        <input 
+          type="text" 
+          [value]="url()" 
+          readonly 
+          class="url-input"
+        />
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="close.emit()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

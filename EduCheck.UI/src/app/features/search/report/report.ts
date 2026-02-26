@@ -38,7 +38,6 @@ export class Report implements OnInit {
       description:              ['', [Validators.required, Validators.minLength(20)]],
     });
 
-    // Pre-fill name from institute detail page
     if (this.instituteId) {
       this.http
         .get<{ data: { institutionName: string; physicalAddress: string; telephone: string } }>(
@@ -56,7 +55,6 @@ export class Report implements OnInit {
         });
     }
 
-    // Pre-fill name from search query param (unknown institution)
     const nameParam = this.route.snapshot.queryParamMap.get('name');
     if (nameParam) {
       this.form.patchValue({ reportedInstituteName: nameParam });
@@ -77,7 +75,6 @@ export class Report implements OnInit {
     this.loading.set(true);
     this.form.disable();
 
-    // Send exactly what the API expects — no extra fields
     const payload = {
       reportedInstituteName:    this.form.value.reportedInstituteName,
       reportedInstituteAddress: this.form.value.reportedInstituteAddress,

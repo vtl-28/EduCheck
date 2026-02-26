@@ -1,0 +1,36 @@
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10B981;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+  animation: slideInUp 0.3s ease-out;
+  
+  &--success {
+    background: #10B981;
+  }
+  
+  &--error {
+    background: #EF4444;
+  }
+  
+  &--info {
+    background: #3B82F6;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translate(-50%, 20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}

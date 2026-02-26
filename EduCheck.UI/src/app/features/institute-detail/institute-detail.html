@@ -100,10 +100,21 @@
           >
             {{ favoriteLabel }}
           </button>
+          <button class="share-btn" (click)="openShareModal()">
+          🔗 Share
+          </button>
           @if (!institute()!.isAccredited) {
             <button class="cta-btn cta-btn--danger" (click)="reportInstitute()">
               🚩 Report
             </button>
+          }
+          
+          @if (showShareModal()) {
+            <app-share-modal
+              [url]="shareUrl"
+              [shareText]="getShareText()"
+              (close)="closeShareModal()"
+            />
           }
         </div>
 

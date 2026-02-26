@@ -479,7 +479,7 @@ public class AuthService : IAuthService
             };
         }
 
-        // Update student-specific fields if applicable
+
         Student? student = null;
         Admin? admin = null;
 

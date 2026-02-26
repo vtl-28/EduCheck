@@ -26,7 +26,7 @@ public class DatabaseHealthCheck : IHealthCheck
     {
         try
         {
-            // Check if we can connect and execute a simple query
+
             var canConnect = await _context.Database.CanConnectAsync(cancellationToken);
 
             if (!canConnect)
@@ -35,7 +35,6 @@ public class DatabaseHealthCheck : IHealthCheck
                 return HealthCheckResult.Unhealthy("Cannot connect to database");
             }
 
-            // Execute a simple query to verify database is responsive
             var startTime = DateTime.UtcNow;
             await _context.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
             var duration = DateTime.UtcNow - startTime;
@@ -47,7 +46,6 @@ public class DatabaseHealthCheck : IHealthCheck
                 { "responseTimeMs", duration.TotalMilliseconds }
             };
 
-            // Warn if response time is high
             if (duration.TotalMilliseconds > 1000)
             {
                 _logger.LogWarning("Database health check: High response time {Duration}ms", duration.TotalMilliseconds);

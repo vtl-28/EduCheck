@@ -19,7 +19,6 @@ export class InstituteService {
 
   constructor(private http: HttpClient) {}
 
-  // ── Search ─────────────────────────────────────────────────
   search(query: string, province?: string, page = 1, pageSize = 20): Observable<SearchResponse> {
     let params = new HttpParams()
       .set('query', query)
@@ -31,14 +30,12 @@ export class InstituteService {
       .pipe(map((res) => res.data));
   }
 
-  // ── Get single institute ───────────────────────────────────
   getById(id: number | string): Observable<Institute> {
     return this.http
       .get<ApiResponse<Institute>>(`${this.base}/Institutes/${id}`)
       .pipe(map((res) => res.data));
   }
 
-  // ── Search History ─────────────────────────────────────────
   getSearchHistory(): Observable<SearchHistoryEntry[]> {
     return this.http
       .get<ApiResponse<SearchHistoryResponse>>(`${this.base}/search-history`)
@@ -49,19 +46,17 @@ export class InstituteService {
     return this.http.delete<void>(`${this.base}/search-history/${id}`);
   }
 
-  // ── Favorites ──────────────────────────────────────────────
   getFavorites(): Observable<FavoriteEntry[]> {
     return this.http
       .get<ApiResponse<FavoritesResponse>>(`${this.base}/favorites`)
       .pipe(map((res) => res.data.favorites));
   }
 
-  // POST /api/favorites/{instituteId}
+
   addFavorite(instituteId: number): Observable<void> {
     return this.http.post<void>(`${this.base}/favorites/${instituteId}`, {});
   }
 
-  // DELETE /api/favorites/{instituteId}
   removeFavorite(instituteId: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/favorites/${instituteId}`);
   }

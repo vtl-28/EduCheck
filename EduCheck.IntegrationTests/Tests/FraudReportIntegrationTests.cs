@@ -21,9 +21,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         _client = factory.CreateClient();
     }
 
-    // =========================================================================
-    // Helpers
-    // =========================================================================
 
     private async Task<(string AccessToken, string RefreshToken, Guid UserId)>
         AuthenticateNewStudentAsync()
@@ -53,9 +50,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
             Description = description
         };
 
-    // =========================================================================
-    // Authentication
-    // =========================================================================
 
     [Fact]
     public async Task CreateReport_WithoutAuthentication_ReturnsUnauthorized()
@@ -96,9 +90,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // =========================================================================
-    // Create Report - Validation
-    // =========================================================================
 
     [Fact]
     public async Task CreateReport_WithEmptyInstituteName_ReturnsBadRequest()
@@ -108,7 +99,7 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
 
         var request = new CreateFraudReportRequest
         {
-            ReportedInstituteName = "",  // Required field - empty
+            ReportedInstituteName = "",
             Description = "This institute is operating without accreditation and deceiving students."
         };
 
@@ -128,7 +119,7 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         var request = new CreateFraudReportRequest
         {
             ReportedInstituteName = "Fake University",
-            Description = "Too short"  // Min 20 characters
+            Description = "Too short"
         };
 
         // Act
@@ -147,7 +138,7 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         var request = new CreateFraudReportRequest
         {
             ReportedInstituteName = "Fake University",
-            ReportedInstitutePhone = "not-a-phone-number!!!", // Invalid - contains letters
+            ReportedInstitutePhone = "not-a-phone-number!!!",
             Description = "This institute is operating without accreditation and deceiving students."
         };
 
@@ -158,9 +149,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    // =========================================================================
-    // Create Report - Success
-    // =========================================================================
 
     [Fact]
     public async Task CreateReport_WithValidData_ReturnsCreatedAndPersistsToDatabase()
@@ -195,9 +183,9 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         report!.StudentId.Should().Be(studentId);
         report.ReportedInstituteName.Should().Be(request.ReportedInstituteName);
         report.Description.Should().Be(request.Description);
-        report.Status.Should().Be(FraudReportStatus.Submitted);  // Default status
-        report.Severity.Should().Be(FraudSeverity.Medium);        // Default severity
-        report.IsAnonymous.Should().BeFalse();                    // Default
+        report.Status.Should().Be(FraudReportStatus.Submitted);
+        report.Severity.Should().Be(FraudSeverity.Medium);
+        report.IsAnonymous.Should().BeFalse();
     }
 
     [Fact]
@@ -206,7 +194,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         // Arrange
         await AuthenticateNewStudentAsync();
 
-        // Only required fields - no address or phone
         var request = new CreateFraudReportRequest
         {
             ReportedInstituteName = "Minimal Fake College",
@@ -226,9 +213,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         result.Data.ReportedInstitutePhone.Should().BeNull();
     }
 
-    // =========================================================================
-    // Get My Reports
-    // =========================================================================
 
     [Fact]
     public async Task GetMyReports_NewUser_ReturnsEmptyList()
@@ -296,9 +280,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         result.Data.Pagination.TotalCount.Should().Be(3);
     }
 
-    // =========================================================================
-    // Get Report By ID
-    // =========================================================================
 
     [Fact]
     public async Task GetReportById_OwnReport_ReturnsReport()
@@ -306,7 +287,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         // Arrange
         await AuthenticateNewStudentAsync();
 
-        // Create a report first
         var createResponse = await _client.PostAsJsonAsync(
             "/api/fraud-reports", ValidReportRequest());
         var created = await createResponse.ReadAsJsonAsync<CreateFraudReportResponse>();
@@ -339,9 +319,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    // =========================================================================
-    // IDOR Security Tests
-    // =========================================================================
 
     [Fact]
     public async Task GetReportById_AnotherUsersReport_ReturnsNotFound()
@@ -416,9 +393,6 @@ public class FraudReportIntegrationTests : IClassFixture<EduCheckWebApplicationF
                 r.ReportedInstituteName.Should().StartWith("Student2"));
     }
 
-    // =========================================================================
-    // End-to-End Workflow
-    // =========================================================================
 
     [Fact]
     public async Task FraudReportWorkflow_CreateVerifyRetrieve_WorksEndToEnd()

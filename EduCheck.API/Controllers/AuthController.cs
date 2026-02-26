@@ -332,7 +332,7 @@ public class AuthController : ControllerBase
             return Redirect($"{frontendUrl}/auth/login?error=google_failed");
         }
 
-        // Redirect back to Angular with tokens in query params
+
         return Redirect(
             $"{frontendUrl}/auth/google-callback" +
             $"?accessToken={Uri.EscapeDataString(result.AccessToken!)}" +

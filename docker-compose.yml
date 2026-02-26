@@ -42,6 +42,9 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       - OTEL_EXPORTER_OTLP_HEADERS=${GRAFANA_OTLP_HEADERS}
       - OTEL_RESOURCE_ATTRIBUTES=service.namespace=educheck-platform,deployment.environment=development
+      
+      # Google Maps API Key
+      - GoogleMaps__ApiKey=${GOOGLE_MAPS_API_KEY}
 
       # dotnet watch
       - DOTNET_USE_POLLING_FILE_WATCHER=true

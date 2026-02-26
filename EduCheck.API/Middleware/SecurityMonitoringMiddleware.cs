@@ -30,14 +30,11 @@ public class SecurityMonitoringMiddleware
         var ipAddress = context.Connection.RemoteIpAddress?.ToString();
         var path = context.Request.Path.Value ?? "";
 
-        // Skip security checks for health and metrics endpoints
         if (path.Contains("/health") || path.Contains("/metrics") || path.Contains("/swagger"))
         {
             await _next(context);
             return;
         }
-
-        // Check if IP is blocked
         if (!string.IsNullOrEmpty(ipAddress) && await securityService.IsIpBlockedAsync(ipAddress))
         {
             _logger.LogWarning("Blocked IP attempted access: {IpAddress}", ipAddress);
@@ -51,7 +48,6 @@ public class SecurityMonitoringMiddleware
             return;
         }
 
-        // Check query string for attack patterns
         foreach (var (key, value) in context.Request.Query)
         {
             var attackEvent = await CheckForAttackPatterns(value.ToString(), key, context, securityService, securityMetrics);
@@ -68,7 +64,6 @@ public class SecurityMonitoringMiddleware
             }
         }
 
-        // Check path for traversal attempts
         var pathTraversal = _attackDetector.DetectPathTraversal(path);
         if (pathTraversal != null)
         {
@@ -90,13 +85,11 @@ public class SecurityMonitoringMiddleware
 
         await _next(context);
 
-        // Record security metrics based on response status codes
         var statusCode = context.Response.StatusCode;
         var userId = context.User?.Identity?.Name;
 
         if (statusCode == 401)
         {
-            // Unauthorized - authentication failure
             securityMetrics.RecordAuthFailure("unauthorized");
 
             _logger.LogWarning(
@@ -105,7 +98,6 @@ public class SecurityMonitoringMiddleware
         }
         else if (statusCode == 403)
         {
-            // Forbidden - potential IDOR or authorization failure
             securityMetrics.RecordIdorAttempt(path);
 
             _logger.LogWarning(
@@ -114,7 +106,6 @@ public class SecurityMonitoringMiddleware
         }
         else if (statusCode == 429)
         {
-            // Rate limit exceeded
             securityMetrics.RecordRateLimitHit(path);
 
             _logger.LogWarning(
@@ -134,7 +125,6 @@ public class SecurityMonitoringMiddleware
         var userAgent = context.Request.Headers.UserAgent.ToString();
         var path = context.Request.Path.Value;
 
-        // Check for SQL injection
         var sqlInjection = _attackDetector.DetectSqlInjection(value, parameter);
         if (sqlInjection != null)
         {
@@ -152,7 +142,6 @@ public class SecurityMonitoringMiddleware
             return sqlInjection;
         }
 
-        // Check for XSS
         var xss = _attackDetector.DetectXss(value, parameter);
         if (xss != null)
         {

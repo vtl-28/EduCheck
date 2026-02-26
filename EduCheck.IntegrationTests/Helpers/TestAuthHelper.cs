@@ -19,7 +19,7 @@ public static class TestAuthHelper
         string? city = "Johannesburg")
     {
         email ??= $"student-{Guid.NewGuid():N}@test.com";
-        // Register student
+
         var registerRequest = new StudentRegistrationRequest
         {
             Email = email,
@@ -79,7 +79,6 @@ public static class TestAuthHelper
         string? department = "Testing Department",
         string? employeeId = "TEST001")
     {
-        // Register admin
         var registerRequest = new AdminRegistrationRequest
         {
             Email = email,

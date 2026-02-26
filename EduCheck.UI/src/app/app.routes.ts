@@ -2,11 +2,10 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
 import { adminGuard } from './core/guards/admin-guard';
 import { guestGuard } from './core/guards/guest-guard';
+import { LocationTestComponent } from './features/nearby-institutes/location-test';
+import { NearbyInstitutesComponent } from './features/nearby-institutes/nearby-institutes';
 
 export const routes: Routes = [
-  // ─────────────────────────────────────────
-  // Public routes
-  // ─────────────────────────────────────────
 
   {
     path: '',
@@ -22,7 +21,7 @@ export const routes: Routes = [
       import('./features/auth/login/login').then(
         (m) => m.Login
       ),
-    canActivate: [guestGuard], // Redirect to /search if already logged in
+    canActivate: [guestGuard],
   },
 
   {
@@ -39,10 +38,6 @@ export const routes: Routes = [
     import('./features/auth/google-callback/google-callback')
     .then(m => m.GoogleCallback),
   },
-
-  // ─────────────────────────────────────────
-  // Authenticated student routes
-  // ─────────────────────────────────────────
 
   {
     path: 'search',
@@ -97,10 +92,14 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
   },
-
-  // ─────────────────────────────────────────
-  // Admin routes
-  // ─────────────────────────────────────────
+  {
+    path: 'location-test',
+    component: LocationTestComponent
+  },
+   {
+    path: 'nearby',
+    component: NearbyInstitutesComponent
+  },
 
   {
     path: 'admin/reports',
@@ -110,11 +109,6 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, adminGuard],
   },
-
-  // ─────────────────────────────────────────
-  // Fallback
-  // ─────────────────────────────────────────
-
   {
     path: '**',
     loadComponent: () =>

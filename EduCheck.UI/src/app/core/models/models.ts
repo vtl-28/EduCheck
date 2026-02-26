@@ -1,6 +1,4 @@
-// ─────────────────────────────────────────────────────────────
-// API wrapper
-// ─────────────────────────────────────────────────────────────
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -8,9 +6,7 @@ export interface ApiResponse<T> {
   errors: string[] | null;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Institute
-// ─────────────────────────────────────────────────────────────
+
 export interface Institute {
   id: number;
   institutionName: string;
@@ -42,17 +38,12 @@ export interface Pagination {
   hasPreviousPage: boolean;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Search
-// ─────────────────────────────────────────────────────────────
+
 export interface SearchResponse {
   institutes: Institute[];
   pagination: Pagination;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Search History
-// ─────────────────────────────────────────────────────────────
 export interface SearchHistoryEntry {
   id: number;
   searchedAt: string;
@@ -64,9 +55,7 @@ export interface SearchHistoryResponse {
   pagination: Pagination;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Favorites
-// ─────────────────────────────────────────────────────────────
+
 export interface FavoriteEntry {
   id: number;
   institute: Institute;
@@ -84,9 +73,7 @@ export interface FavoriteStatusResponse {
   favoritedAt: string | null;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Fraud Reports
-// ─────────────────────────────────────────────────────────────
+
 export type ReportStatus =
   | 'Submitted'
   | 'UnderReview'

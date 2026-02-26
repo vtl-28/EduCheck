@@ -32,7 +32,6 @@ public static class TestDataSeeder
                 PhysicalAddress = $"{i} Test Street, {city}, {province}",
                 PostalAddress = $"P O Box {i}, {city}, {i:D4}",
                 Telephone = $"011 555 {i:D4}",
-                //IsActive = i % 10 != 0, // Every 10th is inactive for testing
                 CreatedAt = DateTime.UtcNow.AddDays(-30),
                 UpdatedAt = DateTime.UtcNow,
                 IsActive = true

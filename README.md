@@ -36,7 +36,7 @@ A production-ready platform for South African students to verify the accreditati
 **Solution:** EduCheck provides an intuitive interface to search accredited institutions and enables students to report fraudulent organizations. Admins can review and verify fraud reports, creating a community-driven fraud detection system.
 
 **Target Users:**
-- **Students:** Search institutions, verify accreditation status, report fraud
+- **Students:** Search institutions, verify accreditation status, report fraud, locate nearby accredited institutes
 - **Admins (DHET Officials):** Review fraud reports, manage verification status
 
 ---
@@ -46,6 +46,17 @@ A production-ready platform for South African students to verify the accreditati
 ### For Students
 - 🔍 **Institution Search** - Real-time search with debouncing and filtering
 - ✅ **Accreditation Verification** - Visual status indicators (Accredited, Provisional, Not Accredited)
+- 📍 **Find Nearby Institutes** - Geolocation-based search with interactive map
+  - Automatic location detection using browser Geolocation API
+  - Google Maps integration with institute markers
+  - Adjustable search radius (5km, 10km, 25km, 50km, 100km)
+  - Distance calculation using Haversine formula
+  - Split view: Interactive map + scrollable list
+  - Click markers for institute details and navigation
+- 🔗 **Share Institute Details** - Social sharing capabilities
+  - Copy institution link to clipboard
+  - WhatsApp sharing with pre-filled message
+  - Direct link generation for easy sharing
 - ❤️ **Favorites Management** - Save frequently searched institutions
 - 🚩 **Fraud Reporting** - Submit detailed reports for unregistered institutions
 - 👤 **User Profiles** - Edit personal information and preferences
@@ -56,6 +67,7 @@ A production-ready platform for South African students to verify the accreditati
 - 🔎 **Report Review** - Expandable cards with detailed reporter information
 - 📈 **Analytics** - Total reports, status breakdown, time-based trends
 - 🔐 **Role-Based Access Control** - Admin-only routes with guards
+- 🗺️ **Geocoding Management** - One-time bulk geocoding of institute addresses
 
 ### Technical Highlights
 - 🐳 **Fully Containerized** - Docker images for both frontend and backend
@@ -64,6 +76,7 @@ A production-ready platform for South African students to verify the accreditati
 - 🔒 **Security-First** - SAST, secret scanning, dependency checks, container vulnerability scanning, OWASP Top 10 protections
 - 📊 **Full Observability** - Grafana Cloud + Loki (logs) + Prometheus (metrics) + OpenTelemetry
 - 📦 **Production-Ready** - Health checks, structured logging, distributed tracing
+- 🗺️ **Maps Integration** - Google Maps JavaScript API with custom markers and info windows
 
 ---
 
@@ -76,6 +89,8 @@ A production-ready platform for South African students to verify the accreditati
 | **TypeScript** | Type-safe development |
 | **RxJS** | Reactive state management |
 | **SCSS** | Modular, maintainable styling |
+| **Google Maps API** | Interactive maps with geolocation and markers |
+| **@angular/google-maps** | Angular wrapper for Google Maps JavaScript API |
 | **Nginx** | Production web server (Alpine-based) |
 
 ### Backend
@@ -670,13 +685,32 @@ cd EduCheck
 cp .env.example .env
 # Edit .env with your database credentials, JWT secret, etc.
 
-# 3. Start the application
+# 3. Set up Google Maps API key
+cd EduCheck.UI/src/environments
+cp environment.development.template.ts environment.development.ts
+cp environment.template.ts environment.ts
+# Edit both files and add your Google Maps API key
+
+# 4. Start the application
 docker-compose up
 
 # Frontend: http://localhost:4200
 # API: http://localhost:5169
 # API Docs: http://localhost:5169/swagger
 ```
+
+### Getting Google Maps API Key
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable APIs:
+   - Maps JavaScript API
+   - Geocoding API
+4. Create API credentials → API key
+5. Restrict API key:
+   - **HTTP referrers:** `localhost:4200`, your staging/production domains
+   - **API restrictions:** Maps JavaScript API, Geocoding API
+6. Add key to environment files
 
 ### Development Workflow
 
@@ -717,6 +751,14 @@ dotnet ef database update --project EduCheck.API
 - [x] Admin dashboard with statistics
 - [x] Profile management
 - [x] Role-based access control
+- [x] **Share Institute Details** - Copy link & WhatsApp sharing
+- [x] **Find Nearby Institutes** - Geolocation-based map search
+  - [x] Browser geolocation with fallback
+  - [x] Google Maps integration with markers
+  - [x] Distance calculation (Haversine formula)
+  - [x] Radius filtering (5km - 100km)
+  - [x] Split view (map + list)
+  - [x] Geocoding of 1,137+ institutes
 - [x] Docker containerization
 - [x] AWS deployment (EC2 + ECR)
 - [x] CI/CD pipeline with E2E tests
@@ -730,21 +772,15 @@ dotnet ef database update --project EduCheck.API
 - [ ] Production environment setup
 - [ ] Performance optimization
 - [ ] Additional E2E test scenarios
+- [ ] Mobile testing of geolocation features
 
 ### 📋 Future Enhancements
 
-- [ ] **Find Nearby Institutions** - Geolocation-based search with map view
-  - Google Maps integration showing institutions within radius
-  - Filter by distance (5km, 10km, 25km, 50km)
-  - Directions to institutions
-  - Save favorite locations
-- [ ] **Share Institute Details** - Social sharing capabilities
-  - Generate shareable links with institution summary
-  - WhatsApp sharing with formatted message
-  - Copy link to clipboard
 - [ ] Email notifications for report status changes
 - [ ] Advanced search filters (by province, type, accreditation date)
 - [ ] Export reports to CSV/PDF
+- [ ] Directions to institutions from current location
+- [ ] Save favorite locations
 - [ ] Multi-language support (English, Afrikaans, Zulu)
 - [ ] Mobile app (React Native or Flutter)
 - [ ] AI-powered fraud detection

@@ -3,11 +3,13 @@ import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { InstituteService } from '../../core/services/institute.service';
 import { Institute, AccreditationStatus, getStatus } from '../../core/models/models';
+import { ShareModalComponent } from '../../shared/components/share-modal/share-modal';
+import { ToastService } from '../../shared/services/toast';
 
 @Component({
   selector: 'app-institute-detail',
   standalone: true,
-  imports: [MatSnackBarModule],
+  imports: [MatSnackBarModule, ShareModalComponent],
   templateUrl: './institute-detail.html',
   styleUrl: './institute-detail.scss',
 })
@@ -17,11 +19,13 @@ export class InstituteDetail implements OnInit {
   private instituteService = inject(InstituteService);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+  private toastService = inject(ToastService);
 
   institute = signal<Institute | null>(null);
   loading = signal(true);
   isFavorite = signal(false);
   togglingFavorite = signal(false);
+  showShareModal = signal(false);
 
   ngOnInit(): void {
     this.loadInstitute();
@@ -84,6 +88,42 @@ export class InstituteDetail implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/search']);
+  }
+
+  openShareModal() {
+    this.showShareModal.set(true);
+  }
+  
+  closeShareModal() {
+    this.showShareModal.set(false);
+    this.toastService.success('Link copied to clipboard!');
+  }
+
+  get shareUrl(): string {
+    const baseUrl = window.location.origin;
+    const currentPath = this.router.url;
+    return `${baseUrl}${currentPath}`;
+  }
+
+  getShareText(): string {
+    const institute = this.institute();
+    if (!institute) return '';
+    
+    const status = this.getStatusLabel(institute.providerType);
+    
+    return `Check out this institution on EduCheck:
+
+📚 ${institute.institutionName}
+✅ Status: ${status}`;
+  }
+
+  getStatusLabel(providerType: string): string {
+    switch(providerType) {
+      case 'Accredited': return 'Accredited ✅';
+      case 'Provisional': return 'Provisionally Accredited ⚠️';
+      case 'Not Accredited': return 'Not Accredited ❌';
+      default: return providerType;
+    }
   }
 
   get statusBannerClass(): string {

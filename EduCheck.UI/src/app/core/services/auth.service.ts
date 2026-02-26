@@ -45,10 +45,8 @@ export class AuthService {
   private readonly REFRESH_KEY = 'educheck_refresh_token';
   private readonly USER_KEY = 'educheck_user';
 
-  // Signal-based reactive state
   private _currentUser = signal<User | null>(this.loadUserFromStorage());
 
-  // Public readonly signals
   readonly currentUser = this._currentUser.asReadonly();
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
   readonly isAdmin = computed(() => this._currentUser()?.role === 'Admin');
@@ -66,14 +64,12 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  // ── Login ──────────────────────────────────────────────────
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${environment.apiUrl}/Auth/login`, credentials)
       .pipe(tap((res) => this.handleAuthSuccess(res)));
   }
 
-  // ── Register ───────────────────────────────────────────────
   register(data: RegisterRequest): Observable<AuthResponse> {
     console.log('Registering user with data:', data);
     return this.http
@@ -81,7 +77,6 @@ export class AuthService {
       .pipe(tap((res) => this.handleAuthSuccess(res)));
   }
 
-  // ── Google OAuth ───────────────────────────────────────────
   handleOAuthSuccess(
   accessToken: string,
   refreshToken: string,
@@ -99,9 +94,6 @@ export class AuthService {
   localStorage.setItem(this.USER_KEY, JSON.stringify(user));
 }
 
-  // loginWithGoogle(): void {
-  //   window.location.href = `${environment.apiUrl}/Auth/google`;
-  // }
 
   loginWithGoogle(): void {
   // Step 1: Get the Google authorization URL from the backend
@@ -118,14 +110,12 @@ export class AuthService {
     });
 }
 
-  // ── Handle OAuth callback (called after redirect) ──────────
   handleOAuthCallback(token: string, refreshToken: string, user: User): void {
     this.storeTokens(token, refreshToken);
     this._currentUser.set(user);
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
-  // ── Logout ─────────────────────────────────────────────────
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
@@ -134,7 +124,6 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
-  // ── Token helpers ──────────────────────────────────────────
   getAccessToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
   }
@@ -143,7 +132,6 @@ export class AuthService {
     return localStorage.getItem(this.REFRESH_KEY);
   }
 
-  // ── Refresh token ──────────────────────────────────────────
   refreshAccessToken(): Observable<AuthResponse> {
     const refreshToken = this.getRefreshToken();
     return this.http
@@ -151,7 +139,7 @@ export class AuthService {
       .pipe(tap((res) => this.handleAuthSuccess(res)));
   }
 
-  // ── Private helpers ────────────────────────────────────────
+
   private handleAuthSuccess(res: AuthResponse): void {
    this.storeTokens(res.accessToken, res.refreshToken);
   // Map numeric role to string

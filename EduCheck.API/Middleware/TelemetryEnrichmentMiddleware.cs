@@ -22,18 +22,14 @@ public class TelemetryEnrichmentMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Generate or get correlation ID
         var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
                             ?? Activity.Current?.TraceId.ToString()
                             ?? Guid.NewGuid().ToString();
 
-        // Add correlation ID to response headers
         context.Response.Headers["X-Correlation-ID"] = correlationId;
 
-        // Get current activity (trace)
         var activity = Activity.Current;
 
-        // Enrich with user information if authenticated
         var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                      ?? context.User.FindFirst("sub")?.Value;
         var userEmail = context.User.FindFirst(ClaimTypes.Email)?.Value;
@@ -52,12 +48,10 @@ public class TelemetryEnrichmentMiddleware
                 activity.SetTag("user.role", userRole);
             }
 
-            // Add request info
             activity.SetTag("http.client_ip", context.Connection.RemoteIpAddress?.ToString());
             activity.SetTag("http.user_agent", context.Request.Headers.UserAgent.ToString());
         }
 
-        // Add to logging scope
         using (_logger.BeginScope(new Dictionary<string, object?>
         {
             ["CorrelationId"] = correlationId,

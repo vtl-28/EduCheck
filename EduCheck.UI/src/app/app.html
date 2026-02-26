@@ -1,2 +1,8 @@
 
 <router-outlet />
+<!-- Toast notification -->
+@if (toastService.toast(); as toast) {
+  <div class="toast toast--{{ toast.type }}">
+    {{ toast.message }}
+  </div>
+}

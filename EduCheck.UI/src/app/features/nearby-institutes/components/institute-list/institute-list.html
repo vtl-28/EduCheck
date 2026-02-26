@@ -1,0 +1,65 @@
+<div class="institute-list">
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Searching for institutes...</p>
+    </div>
+  } @else if (institutes.length === 0) {
+    <div class="empty-state">
+      <span class="empty-state__icon">📍</span>
+      <h3 class="empty-state__title">No Institutes Found</h3>
+      <p class="empty-state__message">
+        Try increasing the search radius to find more institutes.
+      </p>
+    </div>
+  } @else {
+    <div class="list-header">
+      <h3>{{ institutes.length }} {{ institutes.length === 1 ? 'Institute' : 'Institutes' }} Found</h3>
+      <p class="list-header__subtitle">Sorted by distance (nearest first)</p>
+    </div>
+
+    <div class="list-scroll">
+      @for (institute of institutes; track institute.id) {
+        <div 
+          class="institute-card"
+          (click)="onInstituteClick(institute)"
+        >
+          <div class="institute-card__header">
+            <h4 class="institute-card__name">{{ institute.institutionName }}</h4>
+            <span class="institute-card__badge" [class]="getStatusClass(institute)">
+              {{ institute.providerType }}
+            </span>
+          </div>
+
+          <div class="institute-card__details">
+            <div class="detail-row">
+              <span class="detail-row__icon">📍</span>
+              <span class="detail-row__text distance">{{ institute.distance }} km away</span>
+            </div>
+
+            @if (institute.city) {
+              <div class="detail-row">
+                <span class="detail-row__icon">🏙️</span>
+                <span class="detail-row__text">{{ institute.city }}, {{ institute.province }}</span>
+              </div>
+            }
+
+            @if (institute.physicalAddress) {
+              <div class="detail-row">
+                <span class="detail-row__icon">📮</span>
+                <span class="detail-row__text address">{{ institute.physicalAddress }}</span>
+              </div>
+            }
+          </div>
+
+          <button 
+            class="institute-card__button"
+            (click)="onViewDetails($event, institute.id)"
+          >
+            View Details →
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

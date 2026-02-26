@@ -22,7 +22,7 @@ public static class TelemetryConfiguration
         Console.WriteLine($"Endpoint: {Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "NOT SET"}");
         Console.WriteLine("====================================");
 
-        // Configure OpenTelemetry with Grafana + EF Core + Security Metrics
+
         services.AddOpenTelemetry()
             .UseGrafana()
             .WithTracing(tracing => tracing
@@ -34,8 +34,8 @@ public static class TelemetryConfiguration
                     };
                 }))
             .WithMetrics(metrics => metrics
-                .AddMeter("educheck-security")    // Security metrics
-                .AddMeter("educheck-api"));        // Business metrics
+                .AddMeter("educheck-security")
+                .AddMeter("educheck-api"));
 
         Console.WriteLine("[Grafana.OpenTelemetry] Configuration complete with EF Core instrumentation and security metrics!");
 

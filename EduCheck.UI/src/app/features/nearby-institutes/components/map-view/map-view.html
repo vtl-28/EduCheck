@@ -1,0 +1,80 @@
+<div class="map-container">
+  @if (isLoading()) {
+    <div class="map-loading">
+      <div class="spinner"></div>
+      <p>Loading map...</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="map-error">
+      <p>{{ loadError() }}</p>
+      <button (click)="ngOnInit()">Retry</button>
+    </div>
+  } @else {
+    <google-map
+      [center]="center()"
+      [zoom]="zoom"
+      [options]="mapOptions()"
+      width="100%"
+      height="100%"
+    >
+      <!-- User location marker (blue dot) -->
+      @if (userMarkerPosition()) {
+        <map-marker
+          [position]="userMarkerPosition()!"
+          [options]="userMarkerOptions()"
+        />
+      }
+
+      <!-- Institute markers (red dots) -->
+      @for (institute of institutes; track institute.id) {
+        <map-marker
+          #markerElem="mapMarker"
+          [position]="getInstitutePosition(institute)"
+          [options]="instituteMarkerOptions()"
+          [title]="institute.institutionName"
+          (mapClick)="openInfoWindow(markerElem, institute)"
+        />
+      }
+
+      <!-- Info window for selected institute -->
+      <map-info-window>
+        @if (selectedInstitute(); as institute) {
+          <div class="info-window">
+            <h3 class="info-window__title">{{ institute.institutionName }}</h3>
+            
+            <div class="info-window__badge" [class]="getStatusClass(institute)">
+              {{ institute.providerType }}
+            </div>
+            
+            <div class="info-window__details">
+              <p class="info-window__distance">
+                📍 {{ institute.distance }} km away
+              </p>
+              
+              @if (institute.city) {
+                <p class="info-window__location">
+                  {{ institute.city }}, {{ institute.province }}
+                </p>
+              }
+            </div>
+            
+            <button class="info-window__button" (click)="onViewDetails()">
+              View Details
+            </button>
+          </div>
+        }
+      </map-info-window>
+    </google-map>
+
+    <!-- Center on user button -->
+    @if (userMarkerPosition()) {
+      <button 
+        class="center-button" 
+        (click)="centerOnUser()"
+        title="Center on my location"
+      >
+        📍
+      </button>
+    }
+  }
+</div>

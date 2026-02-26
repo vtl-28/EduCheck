@@ -68,6 +68,28 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: EduCheck.UI/package-lock.json
+
+      - name: Create environment files
+        working-directory: ./EduCheck.UI/src/environments
+        run: |
+          echo "export const environment = {
+            production: true,
+            apiUrl: 'http://16.170.145.114:5169/api',
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          };" > environment.ts
+
+          echo "export const environment = {
+            production: true,
+            apiUrl: 'http://16.170.145.114:5169/api',
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          };" > environment.production.ts
+          
+          echo "export const environment = {
+            production: false,
+            apiUrl: 'http://localhost:5169/api',
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          };" > environment.development.ts
+
       - run: npm ci
         working-directory: EduCheck.UI
       - run: npm run build -- --configuration production
@@ -249,6 +271,28 @@ jobs:
           ECR_REPOSITORY: educheck-ui
           IMAGE_TAG: ${{ steps.version.outputs.version }}
         run: |
+          # Create environment files before Docker build
+          cd EduCheck.UI/src/environments
+          echo "export const environment = {
+            production: true,
+            apiUrl: 'http://16.170.145.114:5169/api',
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          };" > environment.ts
+          
+          echo "export const environment = {
+            production: true,
+            apiUrl: 'http://16.170.145.114:5169/api',
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          };" > environment.production.ts
+
+          echo "export const environment = {
+            production: false,
+            apiUrl: 'http://localhost:5169/api',
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+          };" > environment.development.ts
+          
+          cd ../../..
+          
           docker build \
             --file EduCheck.UI/Dockerfile \
             --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \

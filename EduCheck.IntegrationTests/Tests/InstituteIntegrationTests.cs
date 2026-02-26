@@ -19,9 +19,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         _client = factory.CreateClient();
     }
 
-    // =========================================================================
-    // Helper: authenticate client
-    // =========================================================================
 
     private async Task AuthenticateAsync()
     {
@@ -29,9 +26,7 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         _client.SetBearerToken(accessToken);
     }
 
-    // =========================================================================
-    // Search - Authentication
-    // =========================================================================
+
 
     [Fact]
     public async Task Search_WithoutAuthentication_ReturnsUnauthorized()
@@ -46,9 +41,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // =========================================================================
-    // Search - Validation
-    // =========================================================================
 
     [Fact]
     public async Task Search_WithEmptyQuery_ReturnsBadRequest()
@@ -85,7 +77,7 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
     {
         // Arrange
         await AuthenticateAsync();
-        var longQuery = new string('A', 256); // 256 characters
+        var longQuery = new string('A', 256);
 
         // Act
         var response = await _client.GetAsync($"/api/Institutes/search?query={longQuery}");
@@ -94,9 +86,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    // =========================================================================
-    // Search - Results
-    // =========================================================================
 
     [Fact]
     public async Task Search_WithValidQuery_ReturnsMatchingInstitutes()
@@ -104,7 +93,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         // Arrange
         await AuthenticateAsync();
 
-        // "Test" matches all 20 seeded institutes ("Test Institute 001" etc.)
 
         // Act
         var response = await _client.GetAsync("/api/Institutes/search?query=Test");
@@ -143,7 +131,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         // Arrange
         await AuthenticateAsync();
 
-        // Seeded data has institutes with Province = "Gauteng"
 
         // Act
         var response = await _client.GetAsync(
@@ -184,7 +171,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         page1!.Data!.Institutes.Should().HaveCount(5);
         page2!.Data!.Institutes.Should().NotBeEmpty();
 
-        // Pages should contain different institutes
         var page1Ids = page1.Data.Institutes.Select(i => i.Id).ToList();
         var page2Ids = page2.Data.Institutes.Select(i => i.Id).ToList();
         page1Ids.Should().NotIntersectWith(page2Ids);
@@ -203,7 +189,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Verify search history recorded in database
         await using var dbContext = _factory.CreateDbContext();
         var history = await dbContext.InstituteSearchHistory
             .Where(h => h.UserId == userId)
@@ -211,10 +196,6 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
 
         history.Should().NotBeEmpty();
     }
-
-    // =========================================================================
-    // GetById
-    // =========================================================================
 
     [Fact]
     public async Task GetById_WithValidId_ReturnsInstituteDetails()
@@ -242,7 +223,7 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         // Arrange
         await AuthenticateAsync();
 
-        // Act - ID 99999 doesn't exist in seeded data
+        // Act
         var response = await _client.GetAsync("/api/Institutes/99999");
 
         // Assert
@@ -255,7 +236,7 @@ public class InstituteIntegrationTests : IClassFixture<EduCheckWebApplicationFac
         // Arrange
         await AuthenticateAsync();
 
-        // Act - negative ID is invalid
+        // Act
         var response = await _client.GetAsync("/api/Institutes/-1");
 
         // Assert

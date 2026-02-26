@@ -14,7 +14,6 @@ public class MemoryHealthCheck : IHealthCheck
     public MemoryHealthCheck(ILogger<MemoryHealthCheck> logger)
     {
         _logger = logger;
-        // Default threshold: 1GB
         _thresholdBytes = 1024L * 1024L * 1024L;
     }
 

@@ -1,6 +1,7 @@
 ﻿using EduCheck.API.Controllers;
 using EduCheck.Application.DTOs.Institute;
 using EduCheck.Application.Interfaces;
+using EduCheck.Infrastructure.Data;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ namespace EduCheck.Tests.Controllers;
 public class InstitutesControllerTests
 {
     private readonly Mock<IInstituteService> _instituteServiceMock;
+    private readonly Mock<ApplicationDbContext> _contextMock;
     private readonly Mock<ILogger<InstitutesController>> _loggerMock;
     private readonly InstitutesController _controller;
 
@@ -20,7 +22,7 @@ public class InstitutesControllerTests
     {
         _instituteServiceMock = new Mock<IInstituteService>();
         _loggerMock = new Mock<ILogger<InstitutesController>>();
-        _controller = new InstitutesController(_instituteServiceMock.Object, _loggerMock.Object);
+        _controller = new InstitutesController(_instituteServiceMock.Object, _contextMock.Object, _loggerMock.Object);
 
         var userId = Guid.NewGuid();
         var claims = new ClaimsPrincipal(new ClaimsIdentity(new[]

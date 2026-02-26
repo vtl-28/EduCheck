@@ -123,6 +123,11 @@ export class Drawer implements OnInit {
     this.closed.emit();
   }
 
+  goToNearby(): void {
+    this.router.navigate(['/nearby']);
+    this.closed.emit();
+  }
+
   logout(): void {
     this.userMenuOpen.set(false);
     this.auth.logout();

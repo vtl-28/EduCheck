@@ -19,37 +19,31 @@ public class BusinessMetrics
     {
         var meter = meterFactory.Create("educheck-api");
 
-        // Institute searches
         _instituteSearches = meter.CreateCounter<long>(
             name: "educheck.institute.searches",
             unit: "{searches}",
             description: "Number of institute searches");
 
-        // User registrations
         _userRegistrations = meter.CreateCounter<long>(
             name: "educheck.user.registrations",
             unit: "{registrations}",
             description: "Number of user registrations");
 
-        // Fraud reports
         _fraudReports = meter.CreateCounter<long>(
             name: "educheck.fraud.reports",
             unit: "{reports}",
             description: "Number of fraud reports submitted");
 
-        // Login attempts
         _loginAttempts = meter.CreateCounter<long>(
             name: "educheck.auth.login_attempts",
             unit: "{attempts}",
             description: "Number of login attempts");
 
-        // Favorites actions
         _favoritesActions = meter.CreateCounter<long>(
             name: "educheck.favorites.actions",
             unit: "{actions}",
             description: "Number of favorites add/remove actions");
 
-        // Search duration
         _searchDuration = meter.CreateHistogram<double>(
             name: "educheck.institute.search_duration",
             unit: "ms",

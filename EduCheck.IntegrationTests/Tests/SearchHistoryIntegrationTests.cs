@@ -19,10 +19,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         _client = factory.CreateClient();
     }
 
-    // =========================================================================
-    // Helpers
-    // =========================================================================
-
     private async Task<(string AccessToken, string RefreshToken, Guid UserId)>
         AuthenticateNewStudentAsync()
     {
@@ -45,14 +41,10 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
     {
         for (var i = 1; i <= count; i++)
         {
-            // "16 TEST 00001", "16 TEST 00002", etc. - exact format from seeder
             await client.GetAsync($"/api/Institutes/search?query=16 TEST {i:D5}");
         }
     }
 
-    // =========================================================================
-    // Authentication
-    // =========================================================================
 
     [Fact]
     public async Task GetHistory_WithoutAuthentication_ReturnsUnauthorized()
@@ -93,9 +85,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // =========================================================================
-    // Get History
-    // =========================================================================
 
     [Fact]
     public async Task GetHistory_NewUser_ReturnsEmptyList()
@@ -121,7 +110,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         // Arrange
         var (_, _, userId) = await AuthenticateNewStudentAsync();
 
-        // Use actual accreditation numbers from seeder - each finds exactly 1 institute
         await _client.GetAsync("/api/Institutes/search?query=16 TEST 00001");
         await _client.GetAsync("/api/Institutes/search?query=16 TEST 00002");
         await _client.GetAsync("/api/Institutes/search?query=16 TEST 00003");
@@ -152,7 +140,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         // Arrange
         await AuthenticateNewStudentAsync();
 
-        // Search by accreditation number - finds exactly 1 institute
         await _client.GetAsync("/api/Institutes/search?query=16 TEST 00001");
 
         // Act
@@ -167,7 +154,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         entry.Id.Should().BeGreaterThan(0);
         entry.SearchedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(30));
 
-        // SearchHistoryDto nests institute data inside Institute property
         entry.Institute.Should().NotBeNull();
         entry.Institute.InstitutionName.Should().NotBeNullOrEmpty();
     }
@@ -219,9 +205,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         page1Ids.Should().NotIntersectWith(page2Ids);
     }
 
-    // =========================================================================
-    // Delete Single Entry - DELETE /api/search-history/{id}
-    // =========================================================================
 
     [Fact]
     public async Task DeleteHistoryEntry_OwnEntry_ReturnsSuccessAndRemovesFromDatabase()
@@ -302,9 +285,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         entry.Should().NotBeNull();
     }
 
-    // =========================================================================
-    // Delete All History - DELETE /api/search-history
-    // =========================================================================
 
     [Fact]
     public async Task DeleteAllHistory_WithEntries_ReturnsSuccessAndClearsDatabase()
@@ -390,9 +370,6 @@ public class SearchHistoryIntegrationTests : IClassFixture<EduCheckWebApplicatio
         user2History.Should().Be(3);
     }
 
-    // =========================================================================
-    // End-to-End Workflow
-    // =========================================================================
 
     [Fact]
     public async Task SearchHistoryWorkflow_SearchDeleteSingleDeleteAll_WorksEndToEnd()
