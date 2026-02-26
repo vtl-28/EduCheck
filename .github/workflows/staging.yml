@@ -74,13 +74,13 @@ jobs:
         run: |
           echo "export const environment = {
             production: true,
-            apiUrl: 'http://16.170.145.114:5169/api',
+            apiUrl: 'https://staging.educheck.org.za/api',
             googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
           };" > environment.ts
 
           echo "export const environment = {
             production: true,
-            apiUrl: 'http://16.170.145.114:5169/api',
+            apiUrl: 'https://staging.educheck.org.za/api',
             googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
           };" > environment.production.ts
           
@@ -275,13 +275,13 @@ jobs:
           cd EduCheck.UI/src/environments
           echo "export const environment = {
             production: true,
-            apiUrl: 'http://16.170.145.114:5169/api',
+            apiUrl: 'https://staging.educheck.org.za/api',
             googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
           };" > environment.ts
           
           echo "export const environment = {
             production: true,
-            apiUrl: 'http://16.170.145.114:5169/api',
+            apiUrl: 'https://staging.educheck.org.za/api',
             googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
           };" > environment.production.ts
 
@@ -332,7 +332,7 @@ jobs:
     needs: build-and-push-images
     environment:
       name: staging
-      url: http://16.170.145.114:4200
+      url: https://staging.educheck.org.za
     
     steps:
       - uses: actions/checkout@v4
@@ -354,13 +354,16 @@ jobs:
             docker-compose pull
             
             # Restart services
-            docker-compose up -d
+            docker-compose up --build -d
             
             # Wait for services to be healthy
             sleep 30
             
-            # Health check API
+            # Health check API (localhost is correct - checking from inside EC2)
             curl -f http://localhost:5169/health || exit 1
+            
+            # Health check HTTPS endpoint (verify SSL works)
+            curl -f https://staging.educheck.org.za/api/health || exit 1
 
   # E2E tests against deployed staging environment
   e2e-tests:
@@ -390,7 +393,7 @@ jobs:
       - name: Run E2E Tests
         working-directory: EduCheck.UI
         env:
-          BASE_URL: http://16.170.145.114:4200
+          BASE_URL: https://staging.educheck.org.za
         run: npx playwright test --project=chromium
 
       - name: Upload Playwright Report
@@ -419,5 +422,6 @@ jobs:
       - run: |
           echo "🎉 Staging deployment successful!"
           echo "Version: ${{ needs.build-and-push-images.outputs.version }}"
-          echo "Frontend: http://16.170.145.114:4200"
-          echo "API: http://16.170.145.114:5169"
+          echo "🌐 Frontend: https://staging.educheck.org.za"
+          echo "🔌 API: https://staging.educheck.org.za/api"
+          echo "🔐 SSL/TLS: Enabled"
