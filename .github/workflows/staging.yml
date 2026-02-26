@@ -351,10 +351,10 @@ jobs:
               docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
             
             # Pull latest images
-            docker-compose pull
+            docker compose pull
             
             # Restart services
-            docker-compose up --build -d
+            docker compose up --build -d
             
             # Wait for services to be healthy
             sleep 30
