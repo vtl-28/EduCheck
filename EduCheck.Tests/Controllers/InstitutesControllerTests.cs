@@ -14,15 +14,17 @@ namespace EduCheck.Tests.Controllers;
 public class InstitutesControllerTests
 {
     private readonly Mock<IInstituteService> _instituteServiceMock;
-    private readonly Mock<ApplicationDbContext> _contextMock;
+    private readonly Mock<INearbyInstituteService> _nearbyServiceMock;
     private readonly Mock<ILogger<InstitutesController>> _loggerMock;
     private readonly InstitutesController _controller;
 
     public InstitutesControllerTests()
     {
         _instituteServiceMock = new Mock<IInstituteService>();
+        _nearbyServiceMock = new Mock<INearbyInstituteService>();
         _loggerMock = new Mock<ILogger<InstitutesController>>();
-        _controller = new InstitutesController(_instituteServiceMock.Object, _contextMock.Object, _loggerMock.Object);
+        
+        _controller = new InstitutesController(_instituteServiceMock.Object, _nearbyServiceMock.Object, _loggerMock.Object);
 
         var userId = Guid.NewGuid();
         var claims = new ClaimsPrincipal(new ClaimsIdentity(new[]

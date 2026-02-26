@@ -38,6 +38,7 @@ builder.Services.AddControllers();
 builder.Services.AddTelemetry(builder.Configuration);
 
 builder.Services.AddSingleton<BusinessMetrics>();
+builder.Services.AddScoped<INearbyInstituteService, NearbyInstituteService>();
 
 builder.Services.AddHttpClient<IGeocodingService, GeocodingService>();
 

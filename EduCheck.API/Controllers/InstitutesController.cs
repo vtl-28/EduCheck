@@ -16,13 +16,13 @@ namespace EduCheck.API.Controllers;
 public class InstitutesController : ControllerBase
 {
     private readonly IInstituteService _instituteService;
-    private readonly ApplicationDbContext _context;
+    private readonly INearbyInstituteService _nearbyInstituteService;
     private readonly ILogger<InstitutesController> _logger;
 
-    public InstitutesController(IInstituteService instituteService, ApplicationDbContext context, ILogger<InstitutesController> logger)
+    public InstitutesController(IInstituteService instituteService, INearbyInstituteService nearbyInstituteService, ILogger<InstitutesController> logger)
     {
         _instituteService = instituteService;
-        _context = context;
+        _nearbyInstituteService = nearbyInstituteService;
         _logger = logger;
     }
 
@@ -139,97 +139,33 @@ public class InstitutesController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        _logger.LogInformation(
-            "Searching for institutes near ({Lat}, {Lng}) within {Radius}km (page {Page}, size {PageSize})",
-            lat, lng, radius, page, pageSize);
-
-
+        // Validation
         if (!DistanceCalculator.IsValidLatitude(lat))
-        {
-            return BadRequest(new { error = $"Invalid latitude: {lat}. Must be between -90 and +90" });
-        }
+            return BadRequest(new { error = $"Invalid latitude: {lat}" });
 
         if (!DistanceCalculator.IsValidLongitude(lng))
-        {
-            return BadRequest(new { error = $"Invalid longitude: {lng}. Must be between -180 and +180" });
-        }
+            return BadRequest(new { error = $"Invalid longitude: {lng}" });
 
         if (radius <= 0 || radius > 100)
-        {
-            return BadRequest(new { error = $"Invalid radius: {radius}. Must be between 0 and 100 km" });
-        }
+            return BadRequest(new { error = $"Invalid radius: {radius}" });
 
         if (page < 1)
-        {
-            return BadRequest(new { error = $"Invalid page: {page}. Must be >= 1" });
-        }
+            return BadRequest(new { error = $"Invalid page: {page}" });
 
         if (pageSize < 1 || pageSize > 50)
+            return BadRequest(new { error = $"Invalid pageSize: {pageSize}" });
+
+        try
         {
-            return BadRequest(new { error = $"Invalid pageSize: {pageSize}. Must be between 1 and 50" });
+            var result = await _nearbyInstituteService.GetNearbyAsync(
+                lat, lng, radius, page, pageSize);
+            return Ok(result);
         }
-
-
-        var institutesWithLocation = await _context.Institutes
-            .Where(i => i.Latitude != null && i.Longitude != null && i.IsActive)
-            .ToListAsync();
-
-        _logger.LogInformation(
-            "Found {Count} institutes with coordinates",
-            institutesWithLocation.Count);
-
-
-        var nearbyInstitutes = institutesWithLocation
-            .Select(institute => new
-            {
-                Institute = institute,
-                Distance = DistanceCalculator.CalculateDistance(
-                    lat, lng,
-                    institute.Latitude!.Value,
-                    institute.Longitude!.Value)
-            })
-            .Where(x => x.Distance <= radius)
-            .OrderBy(x => x.Distance)
-            .ToList();
-
-        var totalCount = nearbyInstitutes.Count;
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-        _logger.LogInformation(
-            "Found {Count} institutes within {Radius}km",
-            totalCount, radius);
-
-
-        var paginatedData = nearbyInstitutes
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(x => new NearbyInstituteDto
-            {
-                Id = x.Institute.Id,
-                InstitutionName = x.Institute.InstitutionName,
-                ProviderType = x.Institute.ProviderType,
-                PhysicalAddress = x.Institute.PhysicalAddress,
-                City = x.Institute.City,
-                Province = x.Institute.Province,
-                Latitude = x.Institute.Latitude!.Value,
-                Longitude = x.Institute.Longitude!.Value,
-                Distance = Math.Round(x.Distance, 1),
-                IsAccredited = x.Institute.IsAccredited
-            })
-            .ToList();
-
-        var response = new PaginatedResponse<NearbyInstituteDto>
+        catch (Exception ex)
         {
-            Data = paginatedData,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-            TotalPages = totalPages,
-            HasNextPage = page < totalPages,
-            HasPreviousPage = page > 1
-        };
-
-        return Ok(response);
+            _logger.LogError(ex, "Error getting nearby institutes");
+            return StatusCode(500, new { error = "Failed to get nearby institutes" });
+        }
     }
 
 }
