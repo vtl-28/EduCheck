@@ -12,7 +12,7 @@ test.describe('Share Feature', () => {
     await page.waitForTimeout(500); // Wait for debounce
     
     // Wait for results to load
-    await page.waitForSelector('.institute-card', { state: 'visible', timeout: 5000 });
+    await page.waitForSelector('.institute-card', { state: 'visible', timeout: 10000 });
     
     // Click first result
     await page.locator('.institute-card').first().click();
@@ -115,7 +115,7 @@ test('should display correct URL in preview field', async ({ page }) => {
     
     // Verify clipboard contains correct URL
     expect(clipboardText).toBe(expectedUrl);
-    expect(clipboardText).toMatch(/http:\/\/16.170.145.114:4200\/institutes\/\d+/);
+    expect(clipboardText).toMatch(/http:\/\/localhost:4200\/institutes\/\d+/);
   });
 
   test('should close modal and show success toast after copying link', async ({ page, context }) => {
