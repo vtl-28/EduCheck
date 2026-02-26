@@ -23,7 +23,7 @@ public class InstitutesControllerTests
         _instituteServiceMock = new Mock<IInstituteService>();
         _nearbyServiceMock = new Mock<INearbyInstituteService>();
         _loggerMock = new Mock<ILogger<InstitutesController>>();
-        
+
         _controller = new InstitutesController(_instituteServiceMock.Object, _nearbyServiceMock.Object, _loggerMock.Object);
 
         var userId = Guid.NewGuid();
