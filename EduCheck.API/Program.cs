@@ -62,7 +62,7 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    "http://16.170.145.114:4200"
+                    "https://staging.educheck.org.za"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
@@ -72,8 +72,8 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    "https://educheck.co.za",
-                    "https://www.educheck.co.za"
+                    "https://educheck.org.za",
+                    "https://www.educheck.org.za"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()

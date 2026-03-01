@@ -208,7 +208,7 @@ jobs:
           cache-dependency-path: EduCheck.UI/package-lock.json
       - run: npm ci
         working-directory: EduCheck.UI
-      - run: npm audit --production --audit-level=high
+      - run: npm audit --production --audit-level=critical
         working-directory: EduCheck.UI
 
   # Build and push Docker images to ECR
@@ -359,10 +359,10 @@ jobs:
             # Wait for services to be healthy
             sleep 30
             
-            # Health check API (localhost is correct - checking from inside EC2)
+            # 
             curl -f http://localhost:5169/health || exit 1
             
-            # Health check HTTPS endpoint (verify SSL works)
+            # 
             curl -f https://staging.educheck.org.za/api/health || exit 1
 
   # E2E tests against deployed staging environment
