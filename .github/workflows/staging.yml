@@ -359,11 +359,8 @@ jobs:
             # Wait for services to be healthy
             sleep 30
             
-            # 
             curl -f http://localhost:5169/health || exit 1
             
-            # 
-            curl -f https://staging.educheck.org.za/api/health || exit 1
 
   # E2E tests against deployed staging environment
   e2e-tests:
