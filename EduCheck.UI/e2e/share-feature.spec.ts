@@ -115,7 +115,7 @@ test('should display correct URL in preview field', async ({ page }) => {
     
     // Verify clipboard contains correct URL
     expect(clipboardText).toBe(expectedUrl);
-    expect(clipboardText).toMatch(/https:\/\/staging.educheck.org.za:4200\/institutes\/\d+/);
+    expect(clipboardText).toMatch(/https:\/\/staging.educheck.org.za\/institutes\/\d+/);
   });
 
   test('should close modal and show success toast after copying link', async ({ page, context }) => {

@@ -232,7 +232,6 @@ dlldata.c
 # Environment-specific settings with secrets
 appsettings.Development.json
 appsettings.Production.json
-appsettings.Staging.json
 appsettings.Local.json
 .env
 run-dev.sh
