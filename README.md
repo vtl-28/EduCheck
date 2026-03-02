@@ -6,7 +6,7 @@
 [![Angular](https://img.shields.io/badge/Angular-19-DD0031?logo=angular)](https://angular.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql)](https://neon.tech/)
 
-> **Live Staging Environment:** [http://16.170.145.114:4200](http://16.170.145.114:4200)
+> **Live Staging Environment:** [https://staging.educheck.org.za/](https://staging.educheck.org.za/)
 
 A production-ready platform for South African students to verify the accreditation status of higher education institutions and report fraudulent organizations. Built with enterprise-grade CI/CD, containerization, and comprehensive testing.
 
@@ -379,7 +379,7 @@ src/
 
 ## 🚀 Live Demo
 
-**Staging Environment:** [http://16.170.145.114:4200](http://16.170.145.114:4200)
+**Staging Environment:** [https://staging.educheck.org.za](https://staging.educheck.org.za)
 
 ### Test Accounts
 
@@ -635,7 +635,7 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 ### CORS Policy
 
 - **Development:** `localhost:4200`
-- **Staging:** `http://16.170.145.114:4200`
+- **Staging:** `https://staging.educheck.org.za`
 - **Production:** `https://educheck.co.za` (planned)
 - **Credentials:** Allowed for same-origin requests only
 - **Preflight:** Properly handled for all cross-origin requests
