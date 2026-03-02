@@ -302,17 +302,17 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public IActionResult GoogleLogin()
     {
-        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
+        var apiBaseUrl = _configuration["ApiBaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        var redirectUri = $"{apiBaseUrl}/api/Auth/google-callback";
         var authUrl = _googleAuthService.GetAuthorizationUrl(redirectUri);
-
         return Ok(new { AuthorizationUrl = authUrl });
     }
-
 
     [HttpGet("google-callback")]
     public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string? error)
     {
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+        var apiBaseUrl = _configuration["ApiBaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
 
         if (!string.IsNullOrEmpty(error))
         {
@@ -324,14 +324,13 @@ public class AuthController : ControllerBase
             return Redirect($"{frontendUrl}/auth/login?error=no_code");
         }
 
-        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
+        var redirectUri = $"{apiBaseUrl}/api/Auth/google-callback";
         var result = await _googleAuthService.AuthenticateAsync(code, redirectUri);
 
         if (!result.Success)
         {
             return Redirect($"{frontendUrl}/auth/login?error=google_failed");
         }
-
 
         return Redirect(
             $"{frontendUrl}/auth/google-callback" +
@@ -366,7 +365,8 @@ public class AuthController : ControllerBase
             });
         }
 
-        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/Auth/google-callback";
+        var apiBaseUrl = _configuration["ApiBaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        var redirectUri = $"{apiBaseUrl}/api/Auth/google-callback";
         var result = await _googleAuthService.AuthenticateAsync(request.Code, redirectUri);
 
         if (!result.Success)
