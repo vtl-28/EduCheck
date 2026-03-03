@@ -3,9 +3,9 @@ export const environment = {
   apiUrl: 'https://staging.educheck.org.za/api',
   googleMapsApiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE',
   posthog: {
-    apiKey: 'phc_YOUR_DEV_KEY_HERE',  // Replace with your actual key
+    apiKey: 'phc_YOUR_DEV_KEY_HERE',
     apiHost: 'https://app.posthog.com',
-    enabled: true,  // Set to false to disable in dev if needed
+    enabled: true,
     autocapture: true,
     capturePageViews: true
   }

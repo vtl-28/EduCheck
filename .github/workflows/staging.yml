@@ -75,19 +75,40 @@ jobs:
           echo "export const environment = {
             production: true,
             apiUrl: 'https://staging.educheck.org.za/api',
-            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}',
+            posthog: {
+              apiKey: '${{ secrets.POST_HOG_KEY }}',
+              apiHost: 'https://app.posthog.com',
+              enabled: true,
+              autocapture: true,
+              capturePageViews: true
+            }
           };" > environment.ts
 
           echo "export const environment = {
             production: true,
             apiUrl: 'https://staging.educheck.org.za/api',
-            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}',
+            posthog: {
+              apiKey: '${{ secrets.POST_HOG_KEY }}',
+              apiHost: 'https://app.posthog.com',
+              enabled: true,
+              autocapture: true,
+              capturePageViews: true
+            }
           };" > environment.production.ts
           
           echo "export const environment = {
             production: false,
             apiUrl: 'http://localhost:5169/api',
-            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}'
+            googleMapsApiKey: '${{ secrets.GOOGLE_MAPS_API_KEY }}',
+            posthog: {
+              apiKey: '${{ secrets.POST_HOG_KEY }}',
+              apiHost: 'https://app.posthog.com',
+              enabled: true,
+              autocapture: true,
+              capturePageViews: true
+            }
           };" > environment.development.ts
 
       - run: npm ci
@@ -280,7 +301,7 @@ jobs:
             posthog: {
               apiKey: '${{ secrets.POST_HOG_KEY }}',
               apiHost: 'https://app.posthog.com',
-              enabled: true,  // Set to false to disable in dev if needed
+              enabled: true,
               autocapture: true,
               capturePageViews: true
             }
@@ -293,7 +314,7 @@ jobs:
             posthog: {
               apiKey: '${{ secrets.POST_HOG_KEY }}',
               apiHost: 'https://app.posthog.com',
-              enabled: true,  // Set to false to disable in dev if needed
+              enabled: true,
               autocapture: true,
               capturePageViews: true
             }
@@ -306,7 +327,7 @@ jobs:
             posthog: {
               apiKey: '${{ secrets.POST_HOG_KEY }}',
               apiHost: 'https://app.posthog.com',
-              enabled: true,  // Set to false to disable in dev if needed
+              enabled: true,
               autocapture: true,
               capturePageViews: true
             }
