@@ -13,6 +13,7 @@ import { debounceTime, distinctUntilChanged, Subject, switchMap, EMPTY } from 'r
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { InstituteService } from '../../core/services/institute.service';
 import { AuthService } from '../../core/services/auth.service';
+import { AnalyticsService } from '../../core/services/analytics';
 import { Institute, AccreditationStatus, getStatus } from '../../core/models/models';
 import { Drawer } from '../../shared/components/drawer/drawer';
 
@@ -34,6 +35,7 @@ export class Search implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
+  private analytics = inject(AnalyticsService);
 
   readonly displayName = this.auth.displayName;
   readonly userInitials = this.auth.userInitials;
@@ -69,6 +71,15 @@ export class Search implements OnInit {
             this.loading.set(false);
             return EMPTY;
           }
+
+          // Track search initiation
+          this.analytics.trackEvent('institute_search_initiated', {
+            query: query,
+            query_length: query.length,
+            has_province_filter: this.selectedProvince() !== 'All Provinces' && !!this.selectedProvince(),
+            province: this.selectedProvince() || 'all'
+          });
+
           this.loading.set(true);
           const province =
             this.selectedProvince() === 'All Provinces'
@@ -83,12 +94,50 @@ export class Search implements OnInit {
           this.results.set(res.institutes);
           this.hasSearched.set(true);
           this.loading.set(false);
+
+          const unaccreditedCount = res.institutes.filter(i => !i.isAccredited).length;
+          const provisionalCount = res.institutes.filter(i => getStatus(i) === 'Provisional').length;
+
+          // Track search completion
+          this.analytics.trackEvent('institute_search_completed', {
+            query: this.searchQuery(),
+            results_count: res.institutes.length,
+            has_results: res.institutes.length > 0,
+            unaccredited_count: unaccreditedCount,
+            provisional_count: provisionalCount,
+            province_filter: this.selectedProvince() || 'all'
+          });
+
+          // Track fraud discovery
+          if (unaccreditedCount > 0) {
+            this.analytics.trackEvent('unaccredited_institute_discovered', {
+              query: this.searchQuery(),
+              unaccredited_count: unaccreditedCount,
+              total_results: res.institutes.length,
+              institute_names: res.institutes
+                .filter(i => !i.isAccredited)
+                .map(i => i.institutionName)
+            });
+          }
         },
-        error: () => {
+        error: (err) => {
           this.loading.set(false);
+
+          // Track search error
+          this.analytics.trackEvent('institute_search_failed', {
+            query: this.searchQuery(),
+            error_message: err?.message || 'Unknown error',
+            province_filter: this.selectedProvince() || 'all'
+          });
+
           this.snackBar.open('Search failed. Please try again.', 'Dismiss', { duration: 3000 });
         },
       });
+
+    // Track page view on initialization
+    this.analytics.trackPageView('search', {
+      is_authenticated: this.auth.isAuthenticated()
+    });
   }
 
   ngOnInit(): void {
@@ -96,6 +145,11 @@ export class Search implements OnInit {
     if (q) {
       this.searchQuery.set(q);
       this.searchSubject.next(q);
+
+      // Track search from URL query param
+      this.analytics.trackEvent('search_from_url_param', {
+        query: q
+      });
     }
   }
 
@@ -105,12 +159,23 @@ export class Search implements OnInit {
   }
 
   clearSearch(): void {
+    this.analytics.trackEvent('search_cleared', {
+      had_query: !!this.searchQuery(),
+      had_results: this.results().length > 0
+    });
+
     this.searchQuery.set('');
     this.results.set([]);
     this.hasSearched.set(false);
   }
 
   selectProvince(province: string): void {
+    this.analytics.trackEvent('province_filter_changed', {
+      previous_province: this.selectedProvince() || 'all',
+      new_province: province,
+      has_active_search: !!this.searchQuery().trim()
+    });
+
     this.selectedProvince.set(province);
     if (this.searchQuery().trim()) {
       this.searchSubject.next(this.searchQuery());
@@ -118,27 +183,61 @@ export class Search implements OnInit {
   }
 
   openInstitute(result: Institute): void {
+    this.analytics.trackEvent('institute_clicked', {
+      institute_id: result.id,
+      institute_name: result.institutionName,
+      is_accredited: result.isAccredited,
+      accreditation_status: getStatus(result),
+      provider_type: result.providerType,
+      province: result.province,
+      source: 'search_results'
+    });
+
     this.router.navigate(['/institutes', result.id]);
   }
 
   openFromDrawer(instituteId: string): void {
+    this.analytics.trackEvent('institute_opened_from_drawer', {
+      institute_id: instituteId
+    });
+
     this.drawerOpen.set(false);
     this.router.navigate(['/institutes', instituteId]);
   }
 
   toggleFavorite(result: Institute, event: Event): void {
     event.stopPropagation();
+    
     const favs = new Set(this.favoriteIds());
     const key = result.id.toString();
-    if (favs.has(key)) {
+    const isCurrentlyFavorite = favs.has(key);
+
+    if (isCurrentlyFavorite) {
       this.instituteService.removeFavorite(result.id).subscribe(() => {
         favs.delete(key);
         this.favoriteIds.set(new Set(favs));
+
+        // Track unfavorite
+        this.analytics.trackEvent('institute_unfavorited', {
+          institute_id: result.id,
+          institute_name: result.institutionName,
+          is_accredited: result.isAccredited,
+          source: 'search_results'
+        });
       });
     } else {
       this.instituteService.addFavorite(result.id).subscribe(() => {
         favs.add(key);
         this.favoriteIds.set(new Set(favs));
+
+        // Track favorite
+        this.analytics.trackEvent('institute_favorited', {
+          institute_id: result.id,
+          institute_name: result.institutionName,
+          is_accredited: result.isAccredited,
+          accreditation_status: getStatus(result),
+          source: 'search_results'
+        });
       });
     }
   }
@@ -149,10 +248,24 @@ export class Search implements OnInit {
 
   reportInstitute(result: Institute, event: Event): void {
     event.stopPropagation();
+
+    this.analytics.trackEvent('report_institute_clicked', {
+      institute_id: result.id,
+      institute_name: result.institutionName,
+      is_accredited: result.isAccredited,
+      accreditation_status: getStatus(result),
+      source: 'search_results'
+    });
+
     this.router.navigate(['/report', result.id]);
   }
 
   reportUnknown(): void {
+    this.analytics.trackEvent('report_unknown_institute_clicked', {
+      search_query: this.searchQuery(),
+      source: 'no_results'
+    });
+
     this.router.navigate(['/report'], {
       queryParams: { name: this.searchQuery() },
     });
@@ -178,6 +291,11 @@ export class Search implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.drawerOpen()) {
+      this.analytics.trackEvent('drawer_closed', {
+        method: 'escape_key'
+      });
+    }
     this.drawerOpen.set(false);
   }
 }

@@ -11,6 +11,7 @@ import {
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
+import { AnalyticsService } from '../../../core/services/analytics';
 
 // Custom validator — checks both password fields match
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -48,7 +49,8 @@ export class Register {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private analytics: AnalyticsService
   ) {
     this.form = this.fb.group(
       {
@@ -62,6 +64,11 @@ export class Register {
       },
       { validators: passwordMatchValidator }
     );
+
+    // Track page view
+    this.analytics.trackPageView('register', {
+      referrer: document.referrer
+    });
   }
 
   get firstName()       { return this.form.get('firstName')!; }
@@ -112,26 +119,66 @@ export class Register {
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;
 
+    const raw = this.form.value;
+    const hasProvince = !!raw.province?.trim();
+    const hasPhone = !!raw.phoneNumber?.trim();
+
+    // Track registration attempt
+    this.analytics.trackEvent('registration_attempt', {
+      method: 'email',
+      has_province: hasProvince,
+      has_phone: hasPhone,
+      province: raw.province?.trim() || 'not_provided'
+    });
+
     this.loading.set(true);
     this.form.disable();
 
-    // //const { confirmPassword, ...payload } = this.form.value;
-
-  const raw = this.form.value;
-  const payload = {
-    ...raw,
-    phoneNumber: raw.phoneNumber?.trim() || null,
-    province:    raw.province?.trim()    || null,
-    city:        raw.city?.trim()        || null,
-  };
+    const payload = {
+      ...raw,
+      phoneNumber: raw.phoneNumber?.trim() || null,
+      province:    raw.province?.trim()    || null,
+      city:        raw.city?.trim()        || null,
+    };
 
     this.auth.register(payload).subscribe({
-      next: () => {
+      next: (response) => {
+        // Identify new user in PostHog
+        this.analytics.identifyUser(response.user.id, {
+          email: response.user.email,
+          name: `${response.user.firstName} ${response.user.lastName}`,
+          role: response.user.role,
+          province: response.user.province || 'not_provided',
+          city: response.user.city,
+          has_phone: !!response.user.phoneNumber,
+          signup_date: new Date().toISOString(),
+          signup_method: 'email'
+        });
+
+        // Track successful registration
+        this.analytics.trackEvent('user_registered', {
+          method: 'email',
+          user_id: response.user.id,
+          role: response.user.role,
+          has_province: !!response.user.province,
+          has_phone: !!response.user.phoneNumber,
+          province: response.user.province || 'not_provided'
+        });
+
         this.router.navigate(['/search']);
       },
       error: (err) => {
         this.loading.set(false);
         this.form.enable();
+
+        // Track registration failure
+        this.analytics.trackEvent('registration_failed', {
+          method: 'email',
+          error_message: err?.error?.message || 'Unknown error',
+          error_status: err?.status,
+          has_province: hasProvince
+        });
+
         const message =
           err?.error?.message || 'Registration failed. Please try again.';
         this.snackBar.open(message, 'Dismiss', {
@@ -143,14 +190,31 @@ export class Register {
   }
 
   loginWithGoogle(): void {
+    // Track Google registration initiation
+    this.analytics.trackEvent('google_registration_initiated', {
+      source: 'register_page'
+    });
+
     this.auth.loginWithGoogle();
   }
 
   goToLogin(): void {
+    this.analytics.trackEvent('navigation_clicked', {
+      from: 'register',
+      to: 'login',
+      action: 'go_to_login'
+    });
+
     this.router.navigate(['/auth/login']);
   }
 
   goToLanding(): void {
+    this.analytics.trackEvent('navigation_clicked', {
+      from: 'register',
+      to: 'landing',
+      action: 'back_to_home'
+    });
+
     this.router.navigate(['/']);
   }
 }

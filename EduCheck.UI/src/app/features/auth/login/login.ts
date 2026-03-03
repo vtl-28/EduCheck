@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
+import { AnalyticsService } from '../../../core/services/analytics';
 
 @Component({
   selector: 'app-login',
@@ -30,7 +31,8 @@ export class Login implements OnInit {
     private auth: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private analytics: AnalyticsService,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -40,7 +42,19 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     const error = this.route.snapshot.queryParamMap.get('error');
+
+    // Track page view
+    this.analytics.trackPageView('login', {
+      referrer: document.referrer,
+      has_return_url: !!this.route.snapshot.queryParamMap.get('returnUrl')
+    });
+
     if (error === 'google_failed') {
+       this.analytics.trackEvent('google_login_failed', {
+        error_type: 'callback_error',
+        source: 'query_param'
+      });
+
       this.snackBar.open('Google sign-in failed. Please try again.', 'Dismiss', {
         duration: 4000,
         panelClass: ['snack-error'],
@@ -65,10 +79,36 @@ export class Login implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;
+
+    // Track login attempt
+    this.analytics.trackEvent('login_attempt', {
+      method: 'email',
+      has_return_url: !!this.route.snapshot.queryParamMap.get('returnUrl')
+    });
+
     this.loading.set(true);
     this.form.disable();
+
     this.auth.login(this.form.value).subscribe({
-      next: () => {
+      next: (response) => {
+        // Identify user in PostHog
+        this.analytics.identifyUser(response.user.id, {
+          email: response.user.email,
+          name: `${response.user.firstName} ${response.user.lastName}`,
+          role: response.user.role,
+          province: response.user.province,
+          city: response.user.city,
+          phoneNumber: response.user.phoneNumber,
+        });
+
+        // Track successful login
+        this.analytics.trackEvent('user_logged_in', {
+          method: 'email',
+          user_id: response.user.id,
+          role: response.user.role,
+          is_admin: this.auth.isAdmin()
+        });
+
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   if (returnUrl) {
     this.router.navigateByUrl(returnUrl);
@@ -83,6 +123,14 @@ export class Login implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.form.enable();
+
+        // Track login failure
+        this.analytics.trackEvent('login_failed', {
+          method: 'email',
+          error_message: err?.error?.message || 'Unknown error',
+          error_status: err?.status
+        });
+
         const message = err?.error?.message || 'Invalid email or password. Please try again.';
         this.snackBar.open(message, 'Dismiss', {
           duration: 4000,
@@ -93,14 +141,31 @@ export class Login implements OnInit {
   }
 
   loginWithGoogle(): void {
+    // Track Google login initiation
+    this.analytics.trackEvent('google_login_initiated', {
+      source: 'login_page'
+    });
+
     this.auth.loginWithGoogle();
   }
 
   goToRegister(): void {
+    this.analytics.trackEvent('navigation_clicked', {
+      from: 'login',
+      to: 'register',
+      action: 'go_to_register'
+    });
+
     this.router.navigate(['/auth/register']);
   }
 
   goToLanding(): void {
+    this.analytics.trackEvent('navigation_clicked', {
+      from: 'login',
+      to: 'landing',
+      action: 'back_to_home'
+    });
+    
     this.router.navigate(['/']);
   }
 }
