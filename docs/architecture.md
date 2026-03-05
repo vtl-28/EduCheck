@@ -313,8 +313,8 @@ sequenceDiagram
 
 ## Additional Resources
 
-- **[Complete Threat Model](THREAT-MODEL.md)** - Detailed analysis of all 12 threats
-- **[Security Policy](../SECURITY.md)** - Vulnerability reporting guidelines
+- **[Complete Threat Model](threat-model.md)** - Detailed analysis of all 12 threats
+- **[Security Policy](../security.md)** - Vulnerability reporting guidelines
 - **[Project README](../README.md)** - Overview and security highlights
 
 ---
