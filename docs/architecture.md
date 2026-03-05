@@ -1,5 +1,11 @@
-# System Architecture with Trust Boundaries
+# EduCheck Security Architecture Diagrams
 
+This document contains comprehensive architecture diagrams showing EduCheck's security controls, trust boundaries, and threat mitigation strategies.
+
+---
+
+## System Architecture with Trust Boundaries
+```mermaid
 graph TB
     subgraph Internet["🌐 INTERNET (Untrusted Zone)"]
         User["👤 User Browser"]
@@ -45,42 +51,34 @@ graph TB
         TruffleHog["Secret Scanner"]
     end
 
-    %% User Flows
     User -->|"HTTPS Request"| CF
     CF -->|"DDoS Protected"| Nginx
     Nginx -->|"Serve Static Files"| Angular
     Nginx -->|"Proxy API Requests<br/>/api/*"| API
     
-    %% Authentication Flow
     User -->|"OAuth Login"| Google
     Google -->|"Auth Token"| API
     API -->|"Issue JWT"| User
     
-    %% API to Database
     API -->|"Parameterized Queries<br/>EF Core ORM"| DB
     
-    %% Secrets Management
     API -.->|"Fetch Secrets<br/>(Runtime)"| Secrets
     
-    %% Monitoring
     API -->|"Logs & Metrics"| Grafana
     Frontend -->|"Error Tracking"| Grafana
     
-    %% CI/CD Security
     GitHub -->|"Code Commit"| Semgrep
     GitHub -->|"Container Build"| Trivy
     GitHub -->|"Git History"| TruffleHog
     GitHub -->|"Push Images"| ECR
     ECR -->|"Pull Images"| EC2
     
-    %% Attack Vectors (shown in red)
     Attacker -.->|"❌ SQL Injection<br/>(Blocked)"| API
     Attacker -.->|"❌ XSS Attack<br/>(Sanitized)"| Angular
     Attacker -.->|"❌ CSRF<br/>(Token Required)"| API
     Attacker -.->|"❌ Brute Force<br/>(Rate Limited)"| API
     Attacker -.->|"❌ IDOR<br/>(Authz Check)"| API
 
-    %% Styling
     classDef trusted fill:#d4edda,stroke:#28a745,stroke-width:3px
     classDef dmz fill:#fff3cd,stroke:#ffc107,stroke-width:3px
     classDef untrusted fill:#f8d7da,stroke:#dc3545,stroke-width:3px
@@ -90,10 +88,12 @@ graph TB
     class EC2,Frontend,Backend,ReverseProxy dmz
     class Internet,User,Attacker untrusted
     class CICD,Semgrep,Trivy,TruffleHog,Google,Grafana security
+```
 
+---
 
-# Data Flow Diagram with Security Controls
-
+## Data Flow Diagram with Security Controls
+```mermaid
 flowchart LR
     subgraph Client["Client Layer"]
         Browser["User Browser"]
@@ -138,9 +138,12 @@ flowchart LR
     class Cache,DB data
     class OAuth,ParamStore security
     class Loki monitor
+```
 
-# Threat Model STRIDE Mapping
+---
 
+## Threat Model STRIDE Mapping
+```mermaid
 mindmap
   root((EduCheck<br/>Threat Model))
     Spoofing
@@ -193,9 +196,12 @@ mindmap
       T6: IDOR
         Mitigation: Authorization checks
         Mitigation: Resource ownership validation
+```
 
-# Attack Surface Analysis
+---
 
+## Attack Surface Analysis
+```mermaid
 graph TD
     subgraph AttackSurface["🎯 Attack Surface"]
         A1["Public Web Interface<br/>───────────<br/>Risk: Medium<br/>Controls: 5"]
@@ -255,9 +261,12 @@ graph TD
     class A1 medium
     class A4 high
     class C1,C2,C3,C4,C5,C6,C7,C8 control
+```
 
-# Security Testing Coverage
+---
 
+## Security Testing Coverage
+```mermaid
 pie title Security Testing Coverage by Category
     "Authentication & Authorization" : 28
     "Input Validation & Injection" : 24
@@ -265,9 +274,12 @@ pie title Security Testing Coverage by Category
     "Cryptography & Secrets" : 10
     "Infrastructure & Config" : 15
     "Monitoring & Logging" : 11
+```
 
-# Deployment Security Pipeline
+---
 
+## Deployment Security Pipeline
+```mermaid
 sequenceDiagram
     participant Dev as Developer
     participant Git as GitHub
@@ -295,3 +307,41 @@ sequenceDiagram
     
     Note over SAST,Secrets: Security Gates<br/>Block on Critical/High
     Note over ECR,EC2: Only Vetted Images<br/>Reach Production
+```
+
+---
+
+## How to Use These Diagrams
+
+### In Your Documentation
+
+These diagrams support the comprehensive security documentation in this repository:
+
+- **[System Architecture](THREAT-MODEL.md#system-overview)** - Shows trust boundaries and component interactions
+- **[Data Flow](THREAT-MODEL.md#security-controls-by-layer)** - Illustrates security controls at each layer
+- **[STRIDE Mapping](THREAT-MODEL.md#identified-threats)** - Visual representation of all 12 threats and mitigations
+- **[Attack Surface](THREAT-MODEL.md#risk-assessment-matrix)** - Risk levels and control coverage
+- **[Testing Coverage](THREAT-MODEL.md#security-testing-results)** - Distribution of 89 security tests
+- **[Deployment Pipeline](THREAT-MODEL.md#mitigation-status)** - 10-stage security scanning process
+
+### For Interviews and Presentations
+
+Use these diagrams when discussing:
+- System architecture and design decisions
+- Defense-in-depth security strategy
+- Threat modeling methodology (STRIDE)
+- CI/CD security integration
+- Risk assessment and prioritization
+
+---
+
+## Additional Resources
+
+- **[Complete Threat Model](THREAT-MODEL.md)** - Detailed analysis of all 12 threats
+- **[Security Policy](../SECURITY.md)** - Vulnerability reporting guidelines
+- **[Project README](../README.md)** - Overview and security highlights
+
+---
+
+**Last Updated:** March 2026  
+**Maintained by:** Vuyisile Lehola
